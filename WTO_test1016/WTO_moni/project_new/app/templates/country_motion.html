@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动议参与 - {{ country_name }}代表团｜WTO 模拟谈判</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .topbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 8px 0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar-left h1 {
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .country-identity {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+
+        .country-flag-small {
+            width: 24px;
+            height: 18px;
+            border-radius: 3px;
+            object-fit: cover;
+        }
+
+        .country-name-small {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 16px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            margin: 0 0 8px;
+            font-size: 24px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* 进度条样式 */
+        .progress-container {
+            width: 100%;
+        }
+
+        .progress-bar-wrapper {
+            width: 100%;
+            height: 24px;
+            background: #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 12px;
+            transition: width 1s linear, background 0.3s ease;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .progress-bar.warning {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+
+        .progress-bar.danger {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        #progress-text {
+            color: #374151;
+        }
+
+        #time-remaining {
+            color: #10b981;
+        }
+
+        #time-remaining.warning {
+            color: #f59e0b;
+        }
+
+        #time-remaining.danger {
+            color: #ef4444;
+        }
+
+        .motion-info {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .motion-info h3 {
+            margin: 0 0 16px;
+            color: #1e293b;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .info-value {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .motion-content {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .motion-text {
+            line-height: 1.6;
+            color: #374151;
+            font-size: 16px;
+            white-space: pre-wrap;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .panel-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .speaking-order-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .speaking-order-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .speaking-order-item.completed {
+            background: #e2e3e5;
+            border-left-color: #6c757d;
+            opacity: 0.7;
+        }
+
+        .speaking-order-item.current {
+            background: #d4edda;
+            border-left-color: #10b981;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+        }
+
+        .speaking-order-item.my-turn {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+            animation: highlight 2s infinite;
+        }
+
+        @keyframes highlight {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .order-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .speaking-order-item.completed .order-number {
+            background: #6c757d;
+        }
+
+        .speaking-order-item.current .order-number {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .speaking-order-item.my-turn .order-number {
+            background: #f59e0b;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .country-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .country-flag {
+            width: 32px;
+            height: 24px;
+            border-radius: 4px;
+            margin-right: 12px;
+            object-fit: cover;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .country-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-badge.completed {
+            background: #6c757d;
+            color: white;
+        }
+
+        .status-badge.speaking {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-badge.next {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .status-badge.waiting {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .current-speaking-section {
+            text-align: center;
+        }
+
+        .current-speaker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .current-speaker-flag {
+            width: 80px;
+            height: 60px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            object-fit: cover;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .current-speaker-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .speaking-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .speaking-status.waiting {
+            background: #fef9e7;
+            color: #f59e0b;
+        }
+
+        .speaking-status.speaking {
+            background: #d5f4e6;
+            color: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .speaking-status.my-turn {
+            background: #fef3c7;
+            color: #d97706;
+            animation: pulse 2s infinite;
+        }
+
+        .timer-display {
+            font-size: 36px;
+            font-weight: bold;
+            color: #3b82f6;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-display.warning {
+            color: #f59e0b;
+        }
+
+        .timer-display.danger {
+            color: #ef4444;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .controls {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .topbar-content {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-content">
+            <div class="topbar-left">
+                <h1>WTO 模拟谈判 - 动议讨论</h1>
+            </div>
+            <div class="country-identity">
+                <img class="country-flag-small" src="{{ country_flag_url }}" alt="{{ country_name }}" onerror="this.src='/static/flags/default.png'">
+                <span class="country-name-small">{{ country_name }}代表团</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎤 动议讨论参与</h1>
+            <p>参与动议讨论，查看发言顺序，等待发言机会</p>
+        </div>
+
+        <!-- 动议信息 -->
+        <div class="motion-info">
+            <h3>📋 动议信息</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">会议编号：</span>
+                    <span class="info-value">{{ session_id or '未设置' }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">委员会：</span>
+                    <span class="info-value">{{ committee_name or '未设置' }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">议题：</span>
+                    <span class="info-value">{{ agenda or '未设置' }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">动议国家：</span>
+                    <span class="info-value" id="motion-country">{{ motion_country or '未设置' }}</span>
+                </div>
+            </div>
+            <div class="motion-content">
+                <h4 style="margin-bottom: 12px; color: #1e293b;">动议内容：</h4>
+                <div class="motion-text" id="motion-text">{{ motion_text or '动议内容加载中...' }}</div>
+            </div>
+        </div>
+
+        <!-- 提示信息 -->
+        <div id="alert" class="alert"></div>
+
+        <!-- 主要内容 -->
+        <div class="main-content">
+            <!-- 发言顺序 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">📝</div>
+                    <div class="panel-title">发言顺序</div>
+                </div>
+
+                <ul class="speaking-order-list" id="speaking-order-list">
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                        <div>正在加载发言顺序...</div>
+                    </div>
+                </ul>
+            </div>
+
+            <!-- 当前发言的国家 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">🎙️</div>
+                    <div class="panel-title">当前发言的国家</div>
+                </div>
+
+                <div class="current-speaking-section">
+                    <div class="current-speaker">
+                        <div class="current-speaker-name" id="current-speaker-name">等待开始...</div>
+                        <div class="speaking-status waiting" id="speaking-status">等待主席安排</div>
+                    </div>
+
+                    <!-- 倒计时显示 -->
+                    
+
+                    <!-- 进度条 -->
+                    <div class="progress-container" style="margin-top: 20px;">
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar" id="progress-bar"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="progress-text">等待开始</span>
+                            <span id="time-remaining">剩余时间: 5:00</span>
+                        </div>
+                    </div>
+
+                    <div style="color: #6b7280; margin-top: 16px; text-align: center;" id="my-status-text">
+                        <strong>等待发言安排...</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="controls">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-speakers">0</div>
+                    <div class="stat-label">发言国家数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completed-speakers">0</div>
+                    <div class="stat-label">已发言</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="my-order">-</div>
+                    <div class="stat-label">我的顺序</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="speaking-time">${Math.floor(timeLimit / 60)}</div>
+                    <div class="stat-label">发言时间(分钟)</div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn btn-secondary" onclick="refreshData()">
+                    🔄 刷新状态
+                </button>
+                <button class="btn btn-secondary" onclick="goBack()">
+                    ← 返回
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let sessionId = "{{ session_id or '' }}";
+        let committeeName = "{{ committee_name or '' }}";
+        let agenda = "{{ agenda or '' }}";
+        let countryId = "{{ country_id or '' }}";
+        let countryName = "{{ country_name or '' }}";
+        let motionCountry = "{{ motion_country or '' }}";
+
+        let speakingOrder = [];
+        let currentSpeaker = -1;
+        let myPosition = -1;
+        let timeLimit = 300; // 默认5分钟，从主席设置获取
+        let currentTimer = 300; // 当前倒计时时间
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化计时器和进度条显示
+            updateTimerDisplay();
+            updateProgressBar();
+
+            loadSpeakingOrder();
+            startStatusRefresh();
+        });
+
+        // 加载发言顺序
+        async function loadSpeakingOrder() {
+            try {
+                const response = await fetch(`/api/get_speaking_order?session_id=${encodeURIComponent(sessionId)}`);
+                const data = await response.json();
+
+                if (data.code === 200 && data.data) {
+                    speakingOrder = data.data.speaking_order || [];
+                    currentSpeaker = data.data.current_speaker || -1;
+                    const serverTimerRunning = data.data.is_timer_running || false;
+                    const serverCurrentTimer = data.data.current_timer || 0;
+                    
+                    // 从主席设置获取时间限制
+                    if (speakingOrder.length > 0 && speakingOrder[0].speakingTime) {
+                        timeLimit = speakingOrder[0].speakingTime;
+                    }
+
+                    renderSpeakingOrder();
+                    updateCurrentSpeaker();
+                    updateStats();
+
+                    // 同步服务器的计时器状态
+                    if (currentSpeaker >= 0 && serverTimerRunning && serverCurrentTimer > 0) {
+                        currentTimer = serverCurrentTimer;
+                        isTimerRunning = true;
+                    } else if (currentSpeaker >= 0) {
+                        currentTimer = serverCurrentTimer || (speakingOrder[currentSpeaker].speakingTime || timeLimit);
+                        isTimerRunning = false;
+                    } else {
+                        currentTimer = timeLimit;
+                        isTimerRunning = false;
+                    }
+
+                    updateTimerDisplay();
+                    updateProgressBar();
+                }
+            } catch (error) {
+                // 静默处理错误
+            }
+        }
+
+        // 渲染发言顺序
+        function renderSpeakingOrder() {
+            const speakingOrderList = document.getElementById('speaking-order-list');
+
+            if (speakingOrder.length === 0) {
+                speakingOrderList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                        <div>暂无发言顺序</div>
+                        <div style="font-size: 12px; color: #9ca3af; margin-top: 8px;">请等待主席设置发言顺序</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 找到我的位置
+            myPosition = speakingOrder.findIndex(speaker => speaker.id === countryId);
+
+            speakingOrderList.innerHTML = speakingOrder.map((speaker, index) => {
+                let statusClass = '';
+                let statusBadge = '';
+
+                if (speaker.status === 'completed') {
+                    statusClass = 'completed';
+                    statusBadge = '<span class="status-badge completed">✅ 已完成</span>';
+                } else if (speaker.status === 'current') {
+                    statusClass = 'current';
+                    statusBadge = '<span class="status-badge speaking">🎤 正在发言</span>';
+                } else if (index === currentSpeaker) {
+                    // 当前发言者（即使状态不是current，但索引匹配）
+                    statusClass = 'current';
+                    statusBadge = '<span class="status-badge speaking">🎤 正在发言</span>';
+                } else if (speaker.id === countryId && index === currentSpeaker + 1) {
+                    statusClass = 'my-turn';
+                    statusBadge = '<span class="status-badge next">🎤 即将发言</span>';
+                } else if (index < currentSpeaker) {
+                    // 已经发言过的
+                    statusClass = 'completed';
+                    statusBadge = '<span class="status-badge completed">✅ 已完成</span>';
+                } else {
+                    statusClass = '';
+                    statusBadge = '<span class="status-badge waiting">⏳ 等待中</span>';
+                }
+
+                const isMe = speaker.id === countryId;
+                const nameDisplay = isMe ? `${speaker.name} (您)` : speaker.name;
+                const speakingTime = speaker.speakingTime ? Math.floor(speaker.speakingTime / 60) : Math.floor(timeLimit / 60);
+
+                return `
+                    <li class="speaking-order-item ${statusClass}">
+                        <div class="order-number">${index + 1}</div>
+                        <div class="country-info">
+                            <div>
+                                <div class="country-name">${nameDisplay}</div>
+                                <div style="font-size: 11px; color: #6b7280;">限时：${speakingTime}分钟</div>
+                            </div>
+                        </div>
+                        ${statusBadge}
+                    </li>
+                `;
+            }).join('');
+        }
+
+        // 更新当前发言者显示
+        function updateCurrentSpeaker() {
+            const currentSpeakerEl = speakingOrder[currentSpeaker];
+            const nameElement = document.getElementById('current-speaker-name');
+            const statusElement = document.getElementById('speaking-status');
+            const myStatusElement = document.getElementById('my-status-text');
+
+            if (currentSpeakerEl) {
+                nameElement.textContent = currentSpeakerEl.name;
+                statusElement.textContent = '🎤 正在发言';
+                statusElement.className = 'speaking-status speaking';
+
+                // 更新我的状态提示
+                if (currentSpeakerEl.id === countryId) {
+                    myStatusElement.innerHTML = '<strong style="color: #10b981;">您正在发言中！</strong>';
+                } else if (myPosition === currentSpeaker + 1) {
+                    myStatusElement.innerHTML = '<strong style="color: #f59e0b;">您是下一位发言者，请做好准备！</strong>';
+                } else if (myPosition > currentSpeaker) {
+                    const waitingCount = myPosition - currentSpeaker - 1;
+                    myStatusElement.innerHTML = `<strong style="color: #6b7280;">您需要等待${waitingCount}位发言者</strong>`;
+                } else if (myPosition >= 0 && myPosition <= currentSpeaker) {
+                    myStatusElement.innerHTML = '<strong style="color: #6c757d;">您已完成发言</strong>';
+                } else {
+                    myStatusElement.innerHTML = '<strong style="color: #6b7280;">您不在发言顺序中</strong>';
+                }
+            } else {
+                if (speakingOrder.length > 0) {
+                    nameElement.textContent = '等待开始';
+                    statusElement.textContent = '⏳ 等待主席开始';
+                    statusElement.className = 'speaking-status waiting';
+                    myStatusElement.innerHTML = '<strong style="color: #f59e0b;">动议已准备就绪，等待主席开始...</strong>';
+                } else {
+                    nameElement.textContent = '等待安排';
+                    statusElement.textContent = '⏳ 等待主席安排';
+                    statusElement.className = 'speaking-status waiting';
+                    myStatusElement.innerHTML = '<strong style="color: #6b7280;">等待发言安排...</strong>';
+                }
+            }
+        }
+
+        // 更新计时器显示
+        function updateTimerDisplay() {
+            const timerDisplay = document.getElementById('timer-display');
+            if (!timerDisplay) return;
+            
+            const minutes = Math.floor(currentTimer / 60);
+            const seconds = currentTimer % 60;
+            const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            timerDisplay.textContent = timeStr;
+
+            // 根据剩余时间改变颜色
+            if (currentTimer <= 30) {
+                timerDisplay.className = 'timer-display danger';
+            } else if (currentTimer <= 60) {
+                timerDisplay.className = 'timer-display warning';
+            } else {
+                timerDisplay.className = 'timer-display';
+            }
+        }
+
+        // 更新进度条
+        function updateProgressBar() {
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const timeRemaining = document.getElementById('time-remaining');
+            
+            if (!progressBar || !progressText || !timeRemaining) return;
+
+            // 计算进度百分比
+            const percentage = timeLimit > 0 ? (currentTimer / timeLimit) * 100 : 0;
+            progressBar.style.width = percentage + '%';
+
+            // 根据剩余时间改变颜色
+            if (currentTimer <= 30) {
+                progressBar.className = 'progress-bar danger';
+                timeRemaining.className = 'danger';
+            } else if (currentTimer <= 60) {
+                progressBar.className = 'progress-bar warning';
+                timeRemaining.className = 'warning';
+            } else {
+                progressBar.className = 'progress-bar';
+                timeRemaining.className = '';
+            }
+
+            // 更新文本
+            const minutes = Math.floor(currentTimer / 60);
+            const seconds = currentTimer % 60;
+            const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (isTimerRunning) {
+                progressText.textContent = '发言进行中';
+                timeRemaining.textContent = `剩余时间: ${timeStr}`;
+            } else if (currentSpeaker >= 0) {
+                progressText.textContent = '等待开始计时';
+                timeRemaining.textContent = `总时长: ${timeStr}`;
+            } else {
+                progressText.textContent = '等待开始';
+                timeRemaining.textContent = '未开始';
+            }
+        }
+
+        // 注意: 与会国端不使用本地倒计时，直接从服务器同步显示
+        // 每1秒通过轮询API获取最新的计时器状态并更新显示
+        
+        // 停止倒计时(清理旧的本地计时器,如果有的话)
+        function stopCountdown() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            isTimerRunning = false;
+        }
+
+        // 更新计时器显示（带特定时间）
+        function updateTimerDisplayWithTime(speakingTime) {
+            const timerDisplay = document.getElementById('timer-display');
+            const minutes = Math.floor(speakingTime / 60);
+            const seconds = speakingTime % 60;
+            const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerDisplay.textContent = timeStr;
+
+            // 根据剩余时间改变颜色
+            if (speakingTime <= 30) {
+                timerDisplay.className = 'timer-display danger';
+            } else if (speakingTime <= 60) {
+                timerDisplay.className = 'timer-display warning';
+            } else {
+                timerDisplay.className = 'timer-display';
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const total = speakingOrder.length;
+            const completed = speakingOrder.filter(s => s.status === 'completed').length;
+
+            document.getElementById('total-speakers').textContent = total;
+            document.getElementById('completed-speakers').textContent = completed;
+            document.getElementById('my-order').textContent = myPosition >= 0 ? (myPosition + 1) : '-';
+
+            // 更新发言时间显示
+            document.getElementById('speaking-time').textContent = Math.floor(timeLimit / 60);
+            document.getElementById('time-limit').textContent = `${Math.floor(timeLimit / 60)}分钟`;
+        }
+
+        // 申请发言
+        async function requestSpeak() {
+            try {
+                const response = await fetch('/api/request_speak', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        country_id: countryId,
+                        country_name: countryName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    showAlert('发言申请已提交给主席', 'success');
+                } else {
+                    showAlert(data.message || '申请发言失败', 'error');
+                }
+
+            } catch (error) {
+                showAlert('申请发言时发生错误', 'error');
+            }
+        }
+
+        // 申请延时
+        async function requestTime() {
+            const reason = prompt('请输入申请延时的理由：');
+            if (reason) {
+                try {
+                    const response = await fetch('/api/request_time_extension', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            country_id: countryId,
+                            country_name: countryName,
+                            reason: reason
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.code === 200) {
+                        showAlert('延时申请已提交给主席', 'success');
+                    } else {
+                        showAlert(data.message || '申请延时失败', 'error');
+                    }
+
+                } catch (error) {
+                    showAlert('申请延时时发生错误', 'error');
+                }
+            }
+        }
+
+        // 刷新数据
+        async function refreshData() {
+            showAlert('正在刷新数据...', 'success');
+            await loadSpeakingOrder();
+            // 注意: 与会国端不使用本地倒计时，loadSpeakingOrder 已处理所有更新
+            showAlert('数据已刷新', 'success');
+        }
+
+        // 返回到与会国门户
+        function goBack() {
+            const url = `/country-portal?session_id=${encodeURIComponent(sessionId)}&country_id=${encodeURIComponent(countryId)}&country_name=${encodeURIComponent(countryName)}&saved=true`;
+            window.location.href = url;
+        }
+
+        // 开始状态刷新 - 使用固定的1秒轮询确保实时性
+        function startStatusRefresh() {
+            // 使用1秒固定间隔轮询,确保实时同步主席端的计时器
+            setInterval(() => {
+                loadSpeakingOrder();
+            }, 1000);
+        }
+
+        // 显示提示信息
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

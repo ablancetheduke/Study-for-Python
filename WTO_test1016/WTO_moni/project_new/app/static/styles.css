@@ -1,0 +1,510 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+.wrapper {
+    flex: 0 0 250px;
+}
+/*侧边栏核心样式*/
+.sidebar {
+    background-color: #2c3e50;
+    color: white;
+    height: 100vh;
+    transition: all 0.3s ease;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/*菜单切换按钮样式*/
+.menu-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: none;
+}
+/*侧边栏菜单样式*/
+.sidebar-menu {
+    list-style: none;
+    margin-top: 1rem;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    color: #ecf0f1;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.sidebar-menu li a i {
+    margin-right: 0.8rem;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-menu li a:hover {
+    background-color: #34495e;
+}
+
+
+/*顶栏样式*/
+.topbar {
+    background-color: white;
+    padding: 1.2rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    /* 关键：设置为flex容器实现横向横向排列子元素 */
+    display: flex;
+    align-items: center; /* 垂直方向居中对齐 */
+    justify-content: space-between; /* 左右元素分散对齐 */
+    position: fixed; /* 固定在页面顶部 */
+    top: 0;
+    left: 250px;
+    width: 100%;
+    right: 0; /* 确保顶栏占满整个宽度 */
+    z-index: 999; /* 避免被其他内容遮挡 */
+    height: 80px; /* 固定顶栏总高度 */
+    align-items: center; /* 确保内部元素垂直居中 */
+    overflow: hidden; /* 防止内部元素撑开高度 */
+}
+
+.topbar-left {
+    display: flex;
+    /* 改为横向排列（默认就是row，可省略） */
+    flex-direction: row;
+    gap: 1.5rem; /* 横向间距适当调大 */
+    align-items: center; /* 子元素垂直居中 */
+}
+
+/* 固定顶栏显示区域高度，防止输入时高度变化 */
+#committee-name, #agenda-display {
+    height: 50px; /* 根据实际字体大小设置合适高度 */
+    line-height: 24px; /* 与高度一致，确保垂直居中 */
+    white-space: nowrap; /* 禁止文本换行 */
+    overflow: hidden; /* 超出部分隐藏（可选） */
+    text-overflow: ellipsis; /* 超出显示省略号（可选） */
+    min-width: 0; /* 解决flex容器下内容不收缩问题 */
+}
+
+/* 可选：固定输入框高度 */
+#committeeInput, #agendaInput {
+    height: 48px; /* 固定输入框高度 */
+    line-height: 36px;
+    padding: 0 12px; /* 调整内边距避免文字拥挤 */
+    box-sizing: border-box;
+}
+
+/*主内容区容器样式*/
+.main-content {
+    position: fixed; /* 关键：使top属性生效 */
+    top: 80px;
+    width: 100%;
+    left: 250px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 整体布局 */
+.main-content {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* 左右分栏布局 */
+.main-layout {
+    display: flex;
+    width: 100%;
+}
+
+/* 左侧区域 */
+.left-section {
+    width: 50%;
+    padding-right: 20px;
+    box-sizing: border-box;
+}
+
+/* 右侧区域 */
+.right-section {
+    width: 50%;
+    padding-left: 20px;
+    box-sizing: border-box;
+}
+
+/*表单区域*/
+.meeting-settings {
+    padding: 2rem;
+    background-color: white;
+    margin: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    top: 120px;
+    width: 50%;
+}
+
+.input-section {
+    margin-bottom: 1.5rem;
+}
+
+.input-section label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.input-section input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.input-section input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+/* 按钮区域样式调整 */
+/* 新增：标题样式，与按钮对齐 */
+.settings-title {
+    margin: 0; /* 清除默认外边距 */
+    font-size: 1.5rem; /* 大字效果 */
+    color: #2c3e50; /* 与表单标题风格统一 */
+    display: flex;
+    align-items: center; /* 与按钮垂直居中对齐 */
+}
+
+/* 修改：按钮区域布局，让标题和按钮在一行 */
+.action-buttons {
+    padding: 1.5rem 2rem 0; /* 调整顶部间距，与表单区域呼应 */
+    display: flex;
+    gap: 2rem; /* 加大标题和按钮的间距 */
+    align-items: center; /* 垂直居中对齐 */
+}
+
+.action-buttons {
+    padding: 1.5rem 2rem 0; /* 顶部间距与表单保持一致，取消底部padding */
+    display: flex;
+    gap: 1rem; /* 按钮之间的间距 */
+    justify-content: flex-start; /* 按钮左对齐（可选，根据需求调整） */
+}
+
+/* 保持按钮原有样式，无需修改 */
+#reset {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-color: #e74c3c; /* 红色背景 */
+    color: white; /* 白色文字 */
+
+}
+#reset:hover {
+  background-color: #c0392b; /*  hover 时加深红色 */
+}
+
+
+/* 新增国家容器整体样式 */
+.add-country-container {
+    background-color: white;
+    padding: 1.5rem 2rem;
+    margin: 0 1.5rem 1.5rem; /* 与上方会议设置容器保持间距，左右对齐 */
+    border-radius: 8px;
+    width: 50%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* 新增国家标题样式 */
+.add-country-title {
+    color: #2c3e50;
+    font-size: 1.2rem;
+    margin-bottom: 1rem; /* 与输入框保持距离 */
+    font-weight: 600;
+}
+
+/* 输入框组样式 */
+.add-country-input-group {
+    display: flex;
+    align-items: center;
+}
+
+/* 输入框样式（复用部分已有样式，补充调整） */
+#new-country-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+#new-country-input:focus {
+    outline: none;
+    border-color: #3498db; /* 与其他输入框保持一致的聚焦效果 */
+}
+/* 输入框组布局调整（容纳按钮） */
+.add-country-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* 输入框与按钮间距 */
+}
+
+/* 加号按钮样式 */
+.add-btn {
+    width: 48px; /* 与输入框高度匹配 */
+    height: 48px;
+    border: none;
+    border-radius: 4px;
+    background-color:#e7e7e7;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-btn:hover {
+  background-color: #00AC6A; /*  hover 加深 */
+}
+
+/* 输入框宽度调整（避免按钮挤压） */
+#new-country-input {
+  flex: 1; /* 占满剩余宽度 */
+}
+
+
+/* 国家列表容器 */
+.country-list-container {
+    background-color: white;
+    padding: 2rem;
+    margin: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    width: 50%;
+}
+
+/* 列表头部布局 */
+.country-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.country-list-title, .add-country-title {
+    color: #2c3e50;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* 搜索框样式 */
+.search-box input {
+    width: 240px;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+/* 国家列表滚动区域 */
+.draggable-list {
+    border-top: 1px solid #f1f1f1;
+    padding-top: 1rem;
+    max-height: 600px;
+    overflow-y: auto;
+    scroll-behavior: smooth; 
+}
+
+/* 国家项样式 */
+.country-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #f1f1f1;
+    cursor: grab;
+    transition: background-color 0.2s;
+}
+
+.country-item:hover {
+    background-color: #f9f9f9;
+}
+
+/* 国旗样式 */
+.country-flag {
+    width: 24px;
+    height: 16px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+.country-name {
+    flex: 1;
+    font-size: 1rem;
+    color: #333;
+}
+
+/* 新增国家区域 */
+.add-country-container {
+    background-color: white;
+    padding: 2rem;
+    margin: 0 1.5rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.add-country-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+#new-country-input {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+/* 添加按钮样式补充 */
+.add-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.add-btn:hover {
+  background-color: #00AC6A; /*  hover 加深 */
+}
+
+
+/* 应出席国家容器 */
+.attending-countries-container {
+    display: flex;
+    flex-direction: column; /* 使项垂直排列 */
+    gap: 1rem; /* 项目之间的间距 */
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin: 1.5rem;
+    width: 50%;
+}
+
+/* 应出席国家项样式 */
+.attending-country-item {
+    display: flex;
+    justify-content: space-between; /* 让内容两端对齐 */
+    align-items: center;
+    padding: 0.8rem 1.2rem;
+    background-color: #f7f7f7;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    font-size: 1rem;
+    cursor: default;
+    transition: background-color 0.3s;
+    margin: 0.5rem;
+    width: 100%; /* 使项占满整行 */
+}
+
+.attending-country-item:hover {
+    background-color: #ecf0f1;
+}
+
+/* 国旗样式 */
+.attending-country-item .country-flag {
+    width: 36px; /* 控制国旗大小 */
+    height: 24px;
+    object-fit: cover; /* 保证国旗按比例显示 */
+    margin-right: 1rem; /* 国旗和国名之间的间距 */
+}
+
+/* 删除按钮样式 */
+.attending-country-item .remove-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background-color 0.3s;
+    margin-left: 0.8rem;
+}
+
+.attending-country-item .remove-btn:hover {
+    background-color: #c0392b;
+}
+
+.country-item, .attending-country-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    margin-bottom: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+}
+
+.flag-icon {
+    width: 24px;
+    height: 16px;
+    margin-right: 8px;
+}
+
+.add-btn, .remove-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}

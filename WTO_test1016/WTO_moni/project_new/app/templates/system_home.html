@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WTO模拟谈判系统 - 主页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 16px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 24px;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+
+        .header .version {
+            font-size: 18px;
+            opacity: 0.7;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 16px;
+        }
+
+        .role-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .role-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+        }
+
+        .role-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            margin: 0 auto 24px;
+        }
+
+        .role-card.country .role-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .role-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+
+        .role-desc {
+            font-size: 16px;
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .role-features {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .role-features h4 {
+            color: #374151;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .role-features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .role-features li {
+            padding: 8px 0;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .role-features li::before {
+            content: '✅';
+            font-size: 14px;
+        }
+
+        .role-btn {
+            display: block;
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .role-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .role-card.country .role-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .role-card.country .role-btn:hover {
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .system-info {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            text-align: center;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .tech-stack {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tech-item {
+            background: #f0f9ff;
+            color: #0c4a6e;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 40px;
+        }
+
+        .footer p {
+            margin-bottom: 8px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .role-selection {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header h1 {
+                font-size: 36px;
+            }
+
+            .header p {
+                font-size: 20px;
+            }
+
+            .role-title {
+                font-size: 28px;
+            }
+
+            .tech-stack {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ 模拟谈判系统</h1>
+            <p>完整集成版 </p>
+        </div>
+
+        <!-- 系统信息 -->
+        <div class="system-info">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: #1e293b; margin-bottom: 16px;">🚀 系统概览</h2>
+                <p style="color: #6b7280; font-size: 16px;">功能完整的WTO模拟谈判平台，支持完整的会议流程管理</p>
+            </div>
+            
+
+
+            <div class="tech-stack">
+                <div class="tech-item">优美的UI设计</div>
+                <div class="tech-item">响应式布局</div>
+                <div class="tech-item">实时数据同步</div>
+                <div class="tech-item">完整工作流程</div>
+                <div class="tech-item">数据持久化</div>
+                <div class="tech-item">双角色支持</div>
+            </div>
+        </div>
+
+        <!-- 角色选择 -->
+        <div class="role-selection">
+            <!-- 主席角色 -->
+            <div class="role-card chairman">
+                <div class="role-icon">👑</div>
+                <div class="role-title">主席控制台</div>
+                <div class="role-desc">
+                    完整的会议管理和控制功能，从会议设置到共同宣言生成的全流程管理
+                </div>
+                
+                <div class="role-features">
+                    <h4>主要流程</h4>
+                    <ul>
+                        <li>会议设置和参与国管理</li>
+                        <li>投票机制配置</li>
+                        <li>主席点名系统</li>
+                        <li>文件提交监控</li>
+                        <li>动议管理系统</li>
+                        <li>投票监控矩阵</li>
+                        <li>共同宣言管理</li>
+                    </ul>
+                </div>
+                
+                <a href="/chairman-selection?session_id=0000" class="role-btn">
+                    🚀 进入主席控制台
+                </a>
+            </div>
+
+            <!-- 与会国角色 -->
+            <div class="role-card country">
+                <div class="role-icon">🌍</div>
+                <div class="role-title">与会国代表</div>
+                <div class="role-desc">
+                    完整的会议参与体验，从动议讨论到投票表决的全程参与功能
+                </div>
+                
+                <div class="role-features">
+                    <h4>主要流程</h4>
+                    <ul>
+                        <li>选择国家身份</li>
+                        <li>动议讨论参与</li>
+                        <li>文件投票表决</li>
+                        <li>共同宣言确认</li>
+                    </ul>
+                </div>
+                
+                <a href="/country-portal" class="role-btn">
+                    🌟 进入代表门户
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🎯 系统接口地址：<strong>http://127.0.0.1:5000</strong></p>
+            <p>💡 选择您的角色开始体验完整的WTO模拟谈判流程</p>
+            
+            <div style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 20px; margin: 20px 0; text-align: left;">
+                <h4 style="color: white; margin-bottom: 12px;">📝 使用提示：</h4>
+                <ul style="color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; list-style: none; padding: 0;">
+                    <li>• 输入任意会议编号（如12345），系统会自动检查是否存在</li>
+                    <li>• 如果会议不存在，系统会提示您创建新会议</li>
+                    <li>• 五位数字会议编号将使用独立数据库，确保数据隔离</li>
+                    <li>• <strong>主席流程</strong>：选择身份 → 点名 → 文件监控 → 动议管理 → 投票监控 → 宣言管理</li>
+                    <li>• <strong>与会国流程</strong>：选择身份 → 文件提交 → 动议参与 → 文件投票 → 宣言确认</li>
+                    <li>• 所有数据都会实时保存到MongoDB数据库</li>
+                </ul>
+            </div>
+            
+            <p style="margin-top: 20px; font-size: 14px;">
+                <a href="/legacy" style="color: rgba(255,255,255,0.6); text-decoration: none;">访问旧版系统</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('WTO模拟谈判系统主页已加载');
+            console.log('系统接口：http://127.0.0.1:5000');
+            
+            // 添加点击统计
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const role = this.textContent.includes('主席') ? '主席' : '与会国';
+                    console.log(`用户选择角色: ${role}`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件提交｜WTO 模拟谈判</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #1e293b;
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .country-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+        }
+
+        .country-flag {
+            width: 28px;
+            height: 21px;
+            border-radius: 4px;
+            object-fit: cover;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .country-name {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 0 32px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-header {
+            padding: 40px 40px 30px;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+
+        .card-title {
+            margin: 0 0 8px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-subtitle {
+            margin: 0;
+            color: #6b7280;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .card-body {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .file-upload-area {
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 48px 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(59, 130, 246, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+        }
+
+        .file-upload-area:hover::before {
+            opacity: 1;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.12);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            color: #3b82f6;
+            font-size: 32px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-area:hover .upload-icon {
+            background: rgba(59, 130, 246, 0.2);
+            transform: scale(1.1);
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #374151;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #6b7280;
+            background: rgba(107, 114, 128, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-preview {
+            display: none;
+            padding: 24px;
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            margin-top: 24px;
+            backdrop-filter: blur(5px);
+        }
+
+        .file-preview.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .file-details {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .file-meta {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+            font-size: 16px;
+        }
+
+        .file-size {
+            font-size: 14px;
+            color: #6b7280;
+            background: rgba(107, 114, 128, 0.1);
+            padding: 4px 8px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: rgba(243, 244, 246, 0.8);
+            color: #374151;
+            border: 1px solid rgba(209, 213, 219, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(229, 231, 235, 0.9);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .submit-section {
+            margin-top: 40px;
+            padding-top: 32px;
+            border-top: 1px solid rgba(229, 231, 235, 0.3);
+            background: rgba(59, 130, 246, 0.02);
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .submit-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #1e293b;
+            padding: 16px 20px;
+            border-radius: 16px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%);
+            color: white;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%);
+            color: white;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 60px 40px;
+            color: #6b7280;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            margin: 40px 0;
+        }
+
+        .loading.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(59, 130, 246, 0.1);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-info {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .status-title {
+            font-weight: 700;
+            color: #065f46;
+            margin-bottom: 8px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-text {
+            color: #047857;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                margin: 40px auto;
+                padding: 0 16px;
+            }
+
+            .header {
+                padding: 16px 20px;
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .header-left h1 {
+                font-size: 20px;
+            }
+
+            .card {
+                border-radius: 16px;
+            }
+
+            .card-header {
+                padding: 24px;
+                text-align: center;
+            }
+
+            .card-title {
+                font-size: 24px;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .card-body {
+                padding: 24px;
+            }
+
+            .file-upload-area {
+                padding: 32px 24px;
+            }
+
+            .upload-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 24px;
+            }
+
+            .upload-text {
+                font-size: 16px;
+            }
+
+            .file-details {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .file-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .submit-actions {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .toast {
+                right: 16px;
+                left: 16px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-left h1 {
+                font-size: 18px;
+            }
+
+            .card-title {
+                font-size: 20px;
+            }
+
+            .card-subtitle {
+                font-size: 14px;
+            }
+
+            .file-upload-area {
+                padding: 24px 16px;
+            }
+
+            .upload-text {
+                font-size: 14px;
+            }
+
+            .upload-hint {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>📄 WTO 模拟谈判 - 文件提交</h1>
+        </div>
+        <div class="header-right">
+            <div class="country-info" id="country-info" style="display: none;">
+                <img class="country-flag" id="country-flag" src="" alt="">
+                <span class="country-name" id="country-name"></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">📤 提交文件</h2>
+                <p class="card-subtitle">会议编号：<strong id="session-display">{{ session_id }}</strong></p>
+            </div>
+
+            <div class="card-body">
+                <div class="status-info" id="status-info" style="display: none;">
+                    <div class="status-title">提交状态</div>
+                    <div class="status-text" id="status-text"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">选择文件</label>
+                    <div class="file-upload-area" id="upload-area">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">点击选择文件或拖拽文件到此处</div>
+                        <div class="upload-hint">支持 PDF、Word 文档，文件大小不超过 10MB</div>
+                        <input type="file" class="file-input" id="file-input" accept=".pdf,.doc,.docx">
+                    </div>
+
+                    <div class="file-preview" id="file-preview">
+                        <div class="file-info">
+                            <div class="file-details">
+                                <div class="file-icon" id="file-icon">📄</div>
+                                <div class="file-meta">
+                                    <div class="file-name" id="file-name"></div>
+                                    <div class="file-size" id="file-size"></div>
+                                </div>
+                            </div>
+                            <div class="file-actions">
+                                <button class="btn btn-secondary" id="preview-btn">预览</button>
+                                <button class="btn btn-danger" id="remove-btn">删除</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="submit-section">
+                    <div class="submit-actions">
+                        <button class="btn btn-secondary" onclick="history.back()">返回</button>
+                        <button class="btn btn-primary" id="submit-btn" >确认提交</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>正在提交文件...</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SESSION_ID = "{{ session_id }}";
+        const COUNTRY_ID = "{{ request.args.get('country_id', '') }}";
+        const COUNTRY_NAME = "{{ request.args.get('country_name', '') }}";
+
+
+        let selectedFile = null;
+        let isSubmitted = false;
+
+        const elements = {
+            countryInfo: document.getElementById('country-info'),
+            countryFlag: document.getElementById('country-flag'),
+            countryName: document.getElementById('country-name'),
+            sessionDisplay: document.getElementById('session-display'),
+            statusInfo: document.getElementById('status-info'),
+            statusText: document.getElementById('status-text'),
+            uploadArea: document.getElementById('upload-area'),
+            fileInput: document.getElementById('file-input'),
+            filePreview: document.getElementById('file-preview'),
+            fileIcon: document.getElementById('file-icon'),
+            fileName: document.getElementById('file-name'),
+            fileSize: document.getElementById('file-size'),
+            previewBtn: document.getElementById('preview-btn'),
+            removeBtn: document.getElementById('remove-btn'),
+            submitBtn: document.getElementById('submit-btn'),
+            loading: document.getElementById('loading'),
+            toast: document.getElementById('toast')
+        };
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', () => {
+            initCountryDisplay();
+            initEventListeners();
+            checkSubmissionStatus();
+        });
+
+        // 初始化国家信息显示
+        function initCountryDisplay() {
+            if (COUNTRY_ID && COUNTRY_NAME) {
+                elements.countryInfo.style.display = 'flex';
+                elements.countryName.textContent = COUNTRY_NAME;
+                loadCountryFlag();
+            }
+        }
+
+        // 加载国家国旗
+        async function loadCountryFlag() {
+            try {
+                const response = await fetch(`/api/countries?session_id=${encodeURIComponent(SESSION_ID)}`);
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    const country = data.data.find(c => c.id === COUNTRY_ID);
+                    if (country && country.flag_url) {
+                        elements.countryFlag.src = country.flag_url;
+                        elements.countryFlag.alt = COUNTRY_NAME;
+                    }
+                }
+            } catch (error) {
+                console.error('加载国旗失败:', error);
+            }
+        }
+
+        // 检查提交状态
+        async function checkSubmissionStatus() {
+            try {
+                const response = await fetch(`/api/submissions?session_id=${encodeURIComponent(SESSION_ID)}`);
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    const existingSubmission = data.data.find(s => s.country_id === COUNTRY_ID);
+                    if (existingSubmission) {
+                        isSubmitted = true;
+                        showStatus('已提交', '您已经提交过文件，无法重复提交。');
+                        elements.submitBtn.disabled = true;
+                        elements.submitBtn.textContent = '已提交';
+                    }
+                }
+            } catch (error) {
+                console.error('检查提交状态失败:', error);
+            }
+        }
+
+        // 显示状态信息
+        function showStatus(title, text) {
+            elements.statusInfo.style.display = 'block';
+            elements.statusText.textContent = text;
+        }
+
+        // 初始化事件监听
+        function initEventListeners() {
+            // 文件上传区域点击
+            elements.uploadArea.addEventListener('click', () => {
+                if (!isSubmitted) {
+                    elements.fileInput.click();
+                }
+            });
+
+            // 文件输入变化
+            elements.fileInput.addEventListener('change', handleFileSelect);
+
+            // 拖拽上传
+            elements.uploadArea.addEventListener('dragover', handleDragOver);
+            elements.uploadArea.addEventListener('dragleave', handleDragLeave);
+            elements.uploadArea.addEventListener('drop', handleDrop);
+
+            // 按钮事件
+            elements.previewBtn.addEventListener('click', previewFile);
+            elements.removeBtn.addEventListener('click', removeFile);
+            elements.submitBtn.addEventListener('click', submitFile);
+        }
+
+        // 处理文件选择
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        // 处理拖拽悬停
+        function handleDragOver(event) {
+            event.preventDefault();
+            elements.uploadArea.classList.add('dragover');
+        }
+
+        // 处理拖拽离开
+        function handleDragLeave(event) {
+            event.preventDefault();
+            elements.uploadArea.classList.remove('dragover');
+        }
+
+        // 处理文件拖拽
+        function handleDrop(event) {
+            event.preventDefault();
+            elements.uploadArea.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        // 处理文件
+        function processFile(file) {
+            // 检查文件类型
+            const allowedTypes = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ];
+            
+            if (!allowedTypes.includes(file.type)) {
+                showAlert('请选择 PDF 或 Word 文档', 'error');
+                return;
+            }
+
+            // 检查文件大小（10MB）
+            if (file.size > 10 * 1024 * 1024) {
+                showAlert('文件大小不能超过 10MB', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            showFilePreview(file);
+            updateSubmitButton();
+        }
+
+        // 显示文件预览
+        function showFilePreview(file) {
+            elements.fileName.textContent = file.name;
+            elements.fileSize.textContent = formatFileSize(file.size);
+            
+            // 设置文件图标
+            if (file.type === 'application/pdf') {
+                elements.fileIcon.textContent = '📄';
+            } else {
+                elements.fileIcon.textContent = '📝';
+            }
+            
+            elements.filePreview.classList.add('show');
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 预览文件
+        function previewFile() {
+            if (selectedFile) {
+                const url = URL.createObjectURL(selectedFile);
+                window.open(url, '_blank');
+            }
+        }
+
+        // 删除文件
+        function removeFile() {
+            selectedFile = null;
+            elements.fileInput.value = '';
+            elements.filePreview.classList.remove('show');
+            updateSubmitButton();
+        }
+
+        // 更新提交按钮状态
+        function updateSubmitButton() {
+            const canSubmit = selectedFile && !isSubmitted;
+            elements.submitBtn.disabled = !canSubmit;
+        }
+
+        // 提交文件
+        async function submitFile() {
+            if (!selectedFile || isSubmitted) return;
+
+            elements.loading.classList.add('show');
+            elements.submitBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('country_id', COUNTRY_ID);
+                formData.append('text', ''); // 空文本，只提交文件
+                formData.append('file', selectedFile);
+
+                const response = await fetch(`/api/submissions?session_id=${encodeURIComponent(SESSION_ID)}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('提交失败');
+                }
+
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    isSubmitted = true;
+                    showAlert('文件提交成功！', 'success');
+                    showStatus('提交成功', '您的文件已成功提交到会议数据库，正在等待主席审核。');
+                    elements.submitBtn.textContent = '已提交';
+
+                    // 清空文件选择
+                    selectedFile = null;
+                    elements.fileInput.value = '';
+                    elements.filePreview.classList.remove('show');
+                } else {
+                    throw new Error(data.message || '提交失败');
+                }
+            } catch (error) {
+                console.error('提交失败:', error);
+                showAlert('提交失败，请重试', 'error');
+                elements.submitBtn.disabled = false;
+            } finally {
+                elements.loading.classList.remove('show');
+            }
+        }
+
+        // 显示提示消息（保留原有的toast样式）
+        function showToast(message, type = '') {
+            elements.toast.textContent = message;
+            elements.toast.className = `toast ${type}`;
+            elements.toast.classList.add('show');
+
+            setTimeout(() => {
+                elements.toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,78 @@
+[
+    {
+        "country_name": "塞浦路斯",
+        "flag_url": "E:/project_new/frotend/public/flags/cy.png"
+    },
+    {
+        "country_name": "捷克共和国",
+        "flag_url": "E:/project_new/frotend/public/flags/cz.png"
+    },
+    {
+        "country_name": "丹麦",
+        "flag_url": "E:/project_new/frotend/public/flags/dk.png"
+    },
+    {
+        "country_name": "吉布提",
+        "flag_url": "E:/project_new/frotend/public/flags/dj.png"
+    },
+    {
+        "country_name": "多米尼克",
+        "flag_url": "E:/project_new/frotend/public/flags/dm.png"
+    },
+    {
+        "country_name": "多明尼加共和国",
+        "flag_url": "E:/project_new/frotend/public/flags/do.png"
+    },
+    {
+        "country_name": "埃及",
+        "flag_url": "E:/project_new/frotend/public/flags/eg.png"
+    },
+    {
+        "country_name": "萨尔瓦多",
+        "flag_url": "E:/project_new/frotend/public/flags/sv.png"
+    },
+    {
+        "country_name": "赤道几内亚",
+        "flag_url": "E:/project_new/frotend/public/flags/gq.png"
+    },
+    {
+        "country_name": "厄立特里亚",
+        "flag_url": "E:/project_new/frotend/public/flags/er.png"
+    },
+    {
+        "country_name": "爱沙尼亚",
+        "flag_url": "E:/project_new/frotend/public/flags/ee.png"
+    },
+    {
+        "country_name": "埃塞俄比亚",
+        "flag_url": "E:/project_new/frotend/public/flags/et.png"
+    },
+    {
+        "country_name": "欧洲岛屿",
+        "flag_url": "E:/project_new/frotend/public/flags/eu.png"
+    },
+    {
+        "country_name": "福克兰群岛",
+        "flag_url": "E:/project_new/frotend/public/flags/gs.png"
+    },
+    {
+        "country_name": "法罗群岛",
+        "flag_url": "E:/project_new/frotend/public/flags/fo.png"
+    },
+    {
+        "country_name": "斐济",
+        "flag_url": "E:/project_new/frotend/public/flags/fj.png"
+    },
+    {
+        "country_name": "芬兰",
+        "flag_url": "E:/project_new/frotend/public/flags/fi.png"
+    },
+    {
+        "country_name": "法国",
+        "flag_url": "E:/project_new/frotend/public/flags/fr.png"
+    },
+    {
+        "country_name": "法属圭亚那",
+        "flag_url": "E:/project_new/frotend/public/flags/gf.png"
+    }
+]
