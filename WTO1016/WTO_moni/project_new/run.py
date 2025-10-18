@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
-import io
-
-# 修复Windows终端编码问题
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 from flask import Flask, render_template, jsonify, send_from_directory, request, redirect, url_for, current_app
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -970,7 +963,7 @@ def api_finalize_file_voting():
                 # 方法1: 从temp_files获取
                 temp_file = cols["db"]["temp_files"].find_one({"file_id": file_id, "session_id": session_id})
                 if temp_file:
-                    print(f"   从temp_files找到文件信息")
+                    print(f"  ✅ 从temp_files找到文件信息")
                     file_info = temp_file
                     file_name = temp_file.get("saved_name") or temp_file.get("file_name", "")
                     original_name = temp_file.get("original_name", file_name)
@@ -980,7 +973,7 @@ def api_finalize_file_voting():
                 if not file_info:
                     vote_file = cols["db"]["vote_files"].find_one({"file_id": file_id, "session_id": session_id})
                     if vote_file:
-                        print(f"   从vote_files找到文件信息")
+                        print(f"  ✅ 从vote_files找到文件信息")
                         file_info = vote_file
                         file_name = vote_file.get("saved_name") or vote_file.get("file_name", "")
                         original_name = vote_file.get("original_name", file_name)
@@ -988,7 +981,7 @@ def api_finalize_file_voting():
                 
                 # 方法3: 从file_vote_details反查country_id，再从submissions获取
                 if not file_info:
-                    print(f"    temp_files和vote_files都没找到，尝试从file_vote_details反查...")
+                    print(f"  ⚠️  temp_files和vote_files都没找到，尝试从file_vote_details反查...")
                     vote_detail = cols["db"]["file_vote_details"].find_one({
                         "file_id": file_id, 
                         "session_id": session_id
@@ -1026,7 +1019,7 @@ def api_finalize_file_voting():
                 # 如果找到了文件信息，保存到passed_files
                 if file_info and file_name:
                     print(f"  📄 文件名: {file_name}")
-                    print(f"   国家: {country_id}")
+                    print(f"  🌍 国家: {country_id}")
                     
                     # 保存到passed_files集合（专门用于共同宣言生成）
                     passed_file_record = {
@@ -1072,9 +1065,9 @@ def api_finalize_file_voting():
                         "country_id": country_id
                     })
                     
-                    print(f"   文件通过投票：{original_name} (file_id: {file_id}, 文件名: {file_name})")
+                    print(f"  ✅ 文件通过投票：{original_name} (file_id: {file_id}, 文件名: {file_name})")
                 else:
-                    print(f"   警告：无法找到file_id={file_id}的文件信息！")
+                    print(f"  ❌ 警告：无法找到file_id={file_id}的文件信息！")
                     print(f"     同意票: {results['agree']}, 反对票: {results['disagree']}")
                     print(f"     请检查temp_files、vote_files或submissions集合中是否有此文件")
         
@@ -1091,7 +1084,7 @@ def api_finalize_file_voting():
         })
         
     except Exception as e:
-        print(f" 完成投票失败: {str(e)}")
+        print(f"❌ 完成投票失败: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -1114,7 +1107,7 @@ def api_rebuild_passed_files():
         
         # 1. 从file_vote_details获取所有投票记录
         vote_details = list(cols["db"]["file_vote_details"].find({"session_id": session_id}))
-        print(f"\n 找到 {len(vote_details)} 条投票记录")
+        print(f"\n📊 找到 {len(vote_details)} 条投票记录")
         
         if not vote_details:
             return jsonify({
@@ -1145,7 +1138,7 @@ def api_rebuild_passed_files():
             is_passed = results['agree'] > results['disagree']
             
             if is_passed:
-                print(f"\n 文件 {file_id} 通过投票")
+                print(f"\n✅ 文件 {file_id} 通过投票")
                 
                 # 获取country_id
                 country_id = results.get('country_id', '')
@@ -1189,7 +1182,7 @@ def api_rebuild_passed_files():
                     original_name = file_name
                     
                     print(f"  📄 文件名: {file_name}")
-                    print(f"   国家: {country_id}")
+                    print(f"  🌍 国家: {country_id}")
                     
                     # 保存到passed_files集合
                     passed_file_record = {
@@ -1234,10 +1227,10 @@ def api_rebuild_passed_files():
                     
                     print(f"  💾 已保存到passed_files")
                 else:
-                    print(f"    警告：找不到对应的submission记录")
+                    print(f"  ⚠️  警告：找不到对应的submission记录")
         
         print(f"\n{'='*60}")
-        print(f" 重建完成！共有 {passed_count} 个文件通过")
+        print(f"✅ 重建完成！共有 {passed_count} 个文件通过")
         print(f"{'='*60}")
         
         return jsonify({
@@ -1250,7 +1243,7 @@ def api_rebuild_passed_files():
         })
         
     except Exception as e:
-        print(f" 重建passed_files失败: {str(e)}")
+        print(f"❌ 重建passed_files失败: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -2096,7 +2089,7 @@ def api_save_speaking_order():
         })
         
     except Exception as e:
-        print(f" [后端API] 保存失败: {str(e)}")
+        print(f"❌ [后端API] 保存失败: {str(e)}")
         return jsonify({
             "code": 500,
             "message": f"保存发言顺序失败: {str(e)}"
@@ -2142,10 +2135,10 @@ def api_get_speaking_order():
                 }
             }
             
-            print(f" [后端API] 返回数据成功")
+            print(f"✅ [后端API] 返回数据成功")
             return jsonify(response_data)
         else:
-            print(f" [数据库] 未找到 session_id={session_id} 的数据")
+            print(f"⚠️ [数据库] 未找到 session_id={session_id} 的数据")
             return jsonify({
                 "code": 200,
                 "message": "暂无发言顺序",
@@ -2158,7 +2151,7 @@ def api_get_speaking_order():
             })
         
     except Exception as e:
-        print(f" [后端API] 获取失败: {str(e)}")
+        print(f"❌ [后端API] 获取失败: {str(e)}")
         return jsonify({
             "code": 500,
             "message": f"获取发言顺序失败: {str(e)}"
@@ -2208,6 +2201,11 @@ def system_home():
     """新系统主页"""
     return render_template('system_home.html')
 
+@app.route('/country-portal2')
+def country_portal2_page():
+    """与会国门户页面"""
+    return render_template('country_portal.html')
+
 @app.route('/legacy', methods=['GET', 'POST'])
 def legacy_index():
     """保留的旧版首页（已注释功能）"""
@@ -2253,18 +2251,19 @@ def declaration_generator_page():
     return render_template('declaration_generator.html')
 
 @app.route('/motion')
+@app.route('/country-motion')
 def motion_page():
-    """动议倒计时页面"""
+    """动议倒计时页面 / 与会国动议参与页面"""
     session_id = request.args.get("session_id", "default")
     cols = get_cols_by_session(session_id)
     country_id = request.args.get("country_id", "")
     country_name = request.args.get("country_name", "未知国家")
-    
+
     # 获取会议设置
     sdoc = cols["settings"].find_one({"session_id": session_id}) or {}
     committee = sdoc.get("committee_name", " ")
     agenda = sdoc.get("agenda", " ")
-    
+
     # 获取该国家的提交内容作为动议内容
     motion_text = ""
     if country_id:
@@ -2274,7 +2273,7 @@ def motion_page():
         })
         if submission:
             motion_text = submission.get("text", "")
-    
+
     return render_template(
         'motion.html',
         committee_name=committee,
@@ -2285,37 +2284,28 @@ def motion_page():
         motion_text=motion_text
     )
 
+
 @app.route('/vote')
+@app.route('/country-file-vote')
 def vote_page():
-    """投票页面"""
+    """投票页面 / 与会国文件投票页面"""
     session_id = request.args.get("session_id", "default")
     cols = get_cols_by_session(session_id)
     country_id = request.args.get("country_id", "")
     country_name = request.args.get("country_name", "未知国家")
-    
+
     # 获取会议设置
     sdoc = cols["settings"].find_one({"session_id": session_id}) or {}
     committee = sdoc.get("committee_name", " ")
     agenda = sdoc.get("agenda", " ")
-    
-    # 获取该国家的提交内容作为动议内容
-    motion_text = ""
-    if country_id:
-        submission = cols["submissions"].find_one({
-            "session_id": session_id,
-            "country_id": country_id
-        })
-        if submission:
-            motion_text = submission.get("text", "")
-    
+
     return render_template(
         'vote.html',
         committee_name=committee,
         agenda=agenda,
         session_id=session_id,
         country_id=country_id,
-        country_name=country_name,
-        motion_text=motion_text
+        country_name=country_name
     )
 
 @app.route('/file-vote')
@@ -3279,10 +3269,10 @@ def api_get_passed_submissions():
                     "vote_disagree": pf.get("vote_disagree", 0),
                     "vote_abstain": pf.get("vote_abstain", 0)
                 })
-                print(f"   {country_name}: {pf.get('original_name', '')}")
+                print(f"  ✅ {country_name}: {pf.get('original_name', '')}")
         else:
             # 回退到submissions集合（旧版本兼容）
-            print(f"  passed_files为空，尝试从submissions获取...")
+            print(f"⚠️  passed_files为空，尝试从submissions获取...")
             passed_submissions = list(cols["submissions"].find({
                 "session_id": session_id,
                 "vote_passed": True
@@ -3311,7 +3301,7 @@ def api_get_passed_submissions():
                     "vote_updated_at": submission.get("vote_updated_at")
                 })
         
-        print(f" 返回 {len(data)} 个通过投票的文件\n")
+        print(f"✅ 返回 {len(data)} 个通过投票的文件\n")
         
         return jsonify({
             "code": 200,
@@ -3320,7 +3310,7 @@ def api_get_passed_submissions():
         })
         
     except Exception as e:
-        print(f" 获取通过投票的文件时出错: {str(e)}")
+        print(f"❌ 获取通过投票的文件时出错: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({"code": 500, "message": f"获取失败: {str(e)}"}), 500
@@ -4016,27 +4006,28 @@ def get_flag(filename):
 # 共同宣言功能
 # =========================
 @app.route('/declaration')
+@app.route('/country-declaration')
 def declaration_page():
-    """共同宣言页面"""
+    """共同宣言页面 / 与会国共同宣言页面"""
     session_id = request.args.get("session_id", "default")
     sdoc = col_settings.find_one({"session_id": session_id}) or {}
     committee = sdoc.get("committee_name", " ")
     agenda = sdoc.get("agenda", " ")
-    
+
     # 获取已提交文件的国家
     submitted_files = list(col_submissions.find({"session_id": session_id}))
-    
+
     # 统计提交情况
     submitted_countries = []
     total_countries = []
-    
+
     # 获取所有参与国家
     if sdoc.get("participants"):
         for country_id in sdoc["participants"]:
             country = col_countries.find_one({"_id": country_id})
             if country:
                 total_countries.append(country.get("country_name", "未知国家"))
-    
+
     # 获取已提交的国家
     for submission in submitted_files:
         country_id = submission.get("country_id")
@@ -4044,7 +4035,7 @@ def declaration_page():
             country = col_countries.find_one({"_id": country_id})
             if country:
                 submitted_countries.append(country.get("country_name", "未知国家"))
-    
+
     return render_template(
         'declaration.html',
         committee_name=committee,
@@ -4090,7 +4081,7 @@ def generate_declaration():
         
         # 如果passed_files为空，回退到submissions集合
         if not passed_files:
-            print("  passed_files为空，尝试从submissions集合获取...")
+            print("⚠️  passed_files为空，尝试从submissions集合获取...")
             submitted_files = list(cols["submissions"].find({
                 "session_id": session_id,
                 "vote_passed": True
@@ -4100,7 +4091,7 @@ def generate_declaration():
             submitted_files = []
 
         if not passed_files and not submitted_files:
-            print(" 没有找到投票通过的文件")
+            print("❌ 没有找到投票通过的文件")
             return jsonify({"error": "没有找到投票通过的文件，无法生成共同宣言"}), 400
         
         # 准备提交给大模型的数据(提取关键词)
@@ -4110,7 +4101,7 @@ def generate_declaration():
         
         # 【优化】处理passed_files集合中的文件
         if passed_files:
-            print(f"\n 开始处理passed_files中的 {len(passed_files)} 个文件...")
+            print(f"\n📝 开始处理passed_files中的 {len(passed_files)} 个文件...")
             for passed_file in passed_files:
                 country_id = passed_file.get("country_id", "")
                 file_name = passed_file.get("file_name", "")
@@ -4172,7 +4163,7 @@ def generate_declaration():
                 else:
                     combined_text = manual_text
                 
-                print(f" 合并后文本长度: {len(combined_text) if combined_text else 0}")
+                print(f"📊 合并后文本长度: {len(combined_text) if combined_text else 0}")
                 
                 if combined_text:
                     # 不限制长度，保留完整内容给大模型
@@ -4206,13 +4197,13 @@ def generate_declaration():
                         if file_name:
                             upload_dir = Path(current_app.static_folder) / "uploads"
                             file_path = upload_dir / file_name
-                            print(f" 文件路径: {file_path}")
+                            print(f"📂 文件路径: {file_path}")
                             if file_path.exists():
                                 file_text = extract_text_from_file(file_path)
-                                print(f" 提取的文件文本长度: {len(file_text) if file_text else 0}")
+                                print(f"📖 提取的文件文本长度: {len(file_text) if file_text else 0}")
                                 if file_text:
                                     file_text = clean_text(file_text)
-                                    print(f" 清理后文本长度: {len(file_text)}")
+                                    print(f"🧹 清理后文本长度: {len(file_text)}")
                         
                         if file_text:
                             combined_text = file_text
@@ -4233,20 +4224,20 @@ def generate_declaration():
                             print(f"⚠️  跳过国家 {country_name}: 没有有效文本内容")
         
         if not countries_data:
-            print(" 没有找到有效的文本内容")
+            print("❌ 没有找到有效的文本内容")
             return jsonify({"error": "没有找到有效的文本内容"}), 400
         
         # 调用大模型生成共同宣言
         print(f"\n{'='*60}")
         print(f"🤖 准备调用大模型生成共同宣言")
         print(f"📌 主题: {topic}")
-        print(f" 参与国家数量: {len(countries_data)}")
+        print(f"🌍 参与国家数量: {len(countries_data)}")
         for i, data in enumerate(countries_data, 1):
             print(f"   {i}. {data['country']} - 文本长度: {len(data.get('content', ''))}")
         
         print(f"\n🚀 开始调用大模型API...")
         declaration_text = call_llm_for_declaration(topic, countries_data)
-        print(f" 大模型返回宣言长度: {len(declaration_text) if declaration_text else 0}")
+        print(f"✅ 大模型返回宣言长度: {len(declaration_text) if declaration_text else 0}")
         print(f"{'='*60}\n")
         
         # 保存生成的宣言到数据库
@@ -4269,10 +4260,10 @@ def generate_declaration():
             cols["db"]["declarations"].insert_one(declaration_record)
             print(f"💾 宣言已保存到数据库")
         except Exception as save_error:
-            print(f"  保存到数据库失败: {save_error}")
+            print(f"⚠️  保存到数据库失败: {save_error}")
             # 即使保存失败，也返回生成的宣言
         
-        print(f"\n 共同宣言生成成功！")
+        print(f"\n✅ 共同宣言生成成功！")
         print(f"   - 宣言长度: {len(declaration_text)} 字")
         print(f"   - 参与国家: {len(countries_data)} 个")
         print(f"{'='*60}\n")
@@ -4285,7 +4276,7 @@ def generate_declaration():
         })
         
     except Exception as e:
-        print(f" 生成共同宣言时出错: {str(e)}")
+        print(f"❌ 生成共同宣言时出错: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"生成宣言失败: {str(e)}"}), 500

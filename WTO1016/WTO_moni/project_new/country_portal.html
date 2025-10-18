@@ -331,6 +331,69 @@
                 font-size: 20px;
             }
         }
+
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+            width: 95%;
+            max-width: 1400px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .modal-body {
+            flex: 1;
+            padding: 0;
+        }
     </style>
 </head>
 <body>
@@ -384,7 +447,7 @@
                 <div class="section-desc">
                     提交您的立场文件，阐述观点，为后续讨论和投票奠定基础
                 </div>
-                <a href="#" class="function-btn primary" id="file-submit-btn" onclick="goToFileSubmit()">
+                <a href="javascript:void(0)" class="function-btn primary" id="file-submit-btn" onclick="showFileUploadModal()">
                     📝 提交立场文件
                     <span class="status-indicator available"></span>
                 </a>
@@ -402,7 +465,7 @@
                 <div class="section-desc">
                     参与动议讨论，查看发言顺序，申请发言机会，等待轮次发言
                 </div>
-                <a href="#" class="function-btn" id="motion-btn" onclick="goToMotion()">
+                <a href="javascript:void(0)" class="function-btn" id="motion-btn" onclick="showMotionModal()">
                     🎙️ 参与动议讨论
                     <span class="status-indicator available"></span>
                 </a>
@@ -420,7 +483,7 @@
                 <div class="section-desc">
                     对各国提交的文件进行投票表决，表达您的立场和观点
                 </div>
-                <a href="#" class="function-btn success" id="vote-btn" onclick="goToVote()">
+                <a href="javascript:void(0)" class="function-btn success" id="vote-btn" onclick="showVoteModal()">
                     📊 文件投票表决
                     <span class="status-indicator available"></span>
                 </a>
@@ -438,7 +501,7 @@
                 <div class="section-desc">
                     查看会议达成的共同宣言，确认最终立场，提供反馈意见
                 </div>
-                <a href="#" class="function-btn warning" id="declaration-btn" onclick="goToDeclaration()">
+                <a href="javascript:void(0)" class="function-btn warning" id="declaration-btn" onclick="showDeclarationModal()">
                     📋 查看共同宣言
                     <span class="status-indicator available"></span>
                 </a>
@@ -497,6 +560,58 @@
                 <div style="background: rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 20px; font-size: 14px;">🗳️ 文件投票</div>
                 <div style="background: rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 20px; font-size: 14px;">📜 宣言确认</div>
                 <div style="background: rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 20px; font-size: 14px;">💬 意见反馈</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件上传模态框 -->
+    <div id="file-upload-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📤 文件提交</h3>
+                <button class="modal-close" onclick="hideFileUploadModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="file-upload-frame" style="width: 100%; height: 80vh; border: none;" src=""></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- 动议讨论模态框 -->
+    <div id="motion-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎤 动议讨论</h3>
+                <button class="modal-close" onclick="hideMotionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="motion-frame" style="width: 100%; height: 80vh; border: none;" src=""></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件投票模态框 -->
+    <div id="vote-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🗳️ 文件投票</h3>
+                <button class="modal-close" onclick="hideVoteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="vote-frame" style="width: 100%; height: 80vh; border: none;" src=""></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- 共同宣言模态框 -->
+    <div id="declaration-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📜 共同宣言</h3>
+                <button class="modal-close" onclick="hideDeclarationModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="declaration-frame" style="width: 100%; height: 80vh; border: none;" src=""></iframe>
             </div>
         </div>
     </div>
@@ -882,6 +997,202 @@
             setTimeout(() => {
                 alert.classList.remove('show');
             }, 3000);
+        }
+
+        // 文件上传弹窗功能
+        function showFileUploadModal() {
+            if (!selectedCountryId) {
+                showAlert('请先选择您的国家身份', 'error');
+                return;
+            }
+
+            console.log('显示文件上传弹窗');
+            console.log('国家信息:', { selectedCountryId, selectedCountryName, sessionId });
+
+            const modal = document.getElementById('file-upload-modal');
+            const iframe = document.getElementById('file-upload-frame');
+
+            // 构建文件上传页面的URL
+            const uploadUrl = `/file-upload-submit?country_id=${encodeURIComponent(selectedCountryId)}&country_name=${encodeURIComponent(selectedCountryName)}&session_id=${encodeURIComponent(sessionId)}`;
+
+            // 设置iframe源并显示模态框
+            iframe.src = uploadUrl;
+            modal.style.display = 'flex';
+
+            // 点击遮罩层关闭
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    hideFileUploadModal();
+                }
+            };
+
+            // ESC键关闭
+            document.addEventListener('keydown', handleEscKey);
+        }
+
+        function handleEscKey(e) {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                hideFileUploadModal();
+            }
+        }
+
+        function hideFileUploadModal() {
+            const modal = document.getElementById('file-upload-modal');
+            const iframe = document.getElementById('file-upload-frame');
+
+            modal.style.display = 'none';
+            iframe.src = '';
+
+            // 移除事件监听器
+            document.removeEventListener('keydown', handleEscKey);
+            modal.onclick = null;
+        }
+
+        // 动议讨论弹窗功能
+        function showMotionModal() {
+            if (!selectedCountryId) {
+                showAlert('请先选择您的国家身份', 'error');
+                return;
+            }
+
+            console.log('显示动议讨论弹窗');
+            console.log('国家信息:', { selectedCountryId, selectedCountryName, sessionId });
+
+            const modal = document.getElementById('motion-modal');
+            const iframe = document.getElementById('motion-frame');
+
+            // 构建动议页面的URL
+            const motionUrl = `/country-motion?session_id=${encodeURIComponent(sessionId)}&committee_name=WTO争端解决委员会&agenda=国际贸易争端解决机制改革&country_id=${encodeURIComponent(selectedCountryId)}&country_name=${encodeURIComponent(selectedCountryName)}`;
+
+            // 设置iframe源并显示模态框
+            iframe.src = motionUrl;
+            modal.style.display = 'flex';
+
+            // 点击遮罩层关闭
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    hideMotionModal();
+                }
+            };
+
+            // ESC键关闭
+            document.addEventListener('keydown', handleMotionEscKey);
+        }
+
+        function handleMotionEscKey(e) {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                hideMotionModal();
+            }
+        }
+
+        function hideMotionModal() {
+            const modal = document.getElementById('motion-modal');
+            const iframe = document.getElementById('motion-frame');
+
+            modal.style.display = 'none';
+            iframe.src = '';
+
+            // 移除事件监听器
+            document.removeEventListener('keydown', handleMotionEscKey);
+            modal.onclick = null;
+        }
+
+        // 文件投票弹窗功能
+        function showVoteModal() {
+            if (!selectedCountryId) {
+                showAlert('请先选择您的国家身份', 'error');
+                return;
+            }
+
+            console.log('显示文件投票弹窗');
+            console.log('国家信息:', { selectedCountryId, selectedCountryName, sessionId });
+
+            const modal = document.getElementById('vote-modal');
+            const iframe = document.getElementById('vote-frame');
+
+            // 构建投票页面的URL
+            const voteUrl = `/country-file-vote?session_id=${encodeURIComponent(sessionId)}&committee_name=WTO争端解决委员会&agenda=国际贸易争端解决机制改革&country_id=${encodeURIComponent(selectedCountryId)}&country_name=${encodeURIComponent(selectedCountryName)}`;
+
+            // 设置iframe源并显示模态框
+            iframe.src = voteUrl;
+            modal.style.display = 'flex';
+
+            // 点击遮罩层关闭
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    hideVoteModal();
+                }
+            };
+
+            // ESC键关闭
+            document.addEventListener('keydown', handleVoteEscKey);
+        }
+
+        function handleVoteEscKey(e) {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                hideVoteModal();
+            }
+        }
+
+        function hideVoteModal() {
+            const modal = document.getElementById('vote-modal');
+            const iframe = document.getElementById('vote-frame');
+
+            modal.style.display = 'none';
+            iframe.src = '';
+
+            // 移除事件监听器
+            document.removeEventListener('keydown', handleVoteEscKey);
+            modal.onclick = null;
+        }
+
+        // 共同宣言弹窗功能
+        function showDeclarationModal() {
+            if (!selectedCountryId) {
+                showAlert('请先选择您的国家身份', 'error');
+                return;
+            }
+
+            console.log('显示共同宣言弹窗');
+            console.log('国家信息:', { selectedCountryId, selectedCountryName, sessionId });
+
+            const modal = document.getElementById('declaration-modal');
+            const iframe = document.getElementById('declaration-frame');
+
+            // 构建宣言页面的URL
+            const declarationUrl = `/country-declaration?session_id=${encodeURIComponent(sessionId)}&committee_name=WTO争端解决委员会&agenda=国际贸易争端解决机制改革&country_id=${encodeURIComponent(selectedCountryId)}&country_name=${encodeURIComponent(selectedCountryName)}`;
+
+            // 设置iframe源并显示模态框
+            iframe.src = declarationUrl;
+            modal.style.display = 'flex';
+
+            // 点击遮罩层关闭
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    hideDeclarationModal();
+                }
+            };
+
+            // ESC键关闭
+            document.addEventListener('keydown', handleDeclarationEscKey);
+        }
+
+        function handleDeclarationEscKey(e) {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                hideDeclarationModal();
+            }
+        }
+
+        function hideDeclarationModal() {
+            const modal = document.getElementById('declaration-modal');
+            const iframe = document.getElementById('declaration-frame');
+
+            modal.style.display = 'none';
+            iframe.src = '';
+
+            // 移除事件监听器
+            document.removeEventListener('keydown', handleDeclarationEscKey);
+            modal.onclick = null;
         }
     </script>
 </body>
