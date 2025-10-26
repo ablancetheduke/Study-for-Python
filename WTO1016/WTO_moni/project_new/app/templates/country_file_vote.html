@@ -666,9 +666,6 @@
                 <button class="btn btn-secondary" onclick="refreshData()">
                     🔄 刷新数据
                 </button>
-                <button class="btn btn-secondary" onclick="goBack()">
-                    ← 返回
-                </button>
             </div>
         </div>
     </div>
@@ -733,7 +730,6 @@
                 }
             } catch (error) {
                 console.error('加载文件列表失败:', error);
-                showAlert('网络错误，请检查连接后重试', 'error');
             }
         }
 
@@ -902,7 +898,7 @@
                 
             } catch (error) {
                 console.error('投票失败:', error);
-                showAlert('投票时发生错误', 'error');
+
             }
         }
 
@@ -1008,7 +1004,6 @@
                     
                 } catch (error) {
                     console.error('提交投票失败:', error);
-                    showAlert('提交投票时发生错误', 'error');
                 }
             }
         }

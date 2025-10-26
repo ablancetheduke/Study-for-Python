@@ -9,8 +9,12 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, UTC, timedelta
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 from flask import session, request, redirect, url_for, render_template
 import requests
+
+# 加载环境变量
+load_dotenv()
 from bson import ObjectId
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -41,11 +45,13 @@ app = Flask(
     template_folder='app/templates'
 )
 CORS(app)
-app.secret_key = b'\xc9\xa3u\xbf<\xb8Sm#\xc5>f!\x8f\xdf\xa5Q\x14\x88\xe6Y\xfd^2'
+
+# 从环境变量获取配置
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-secret-key-change-in-production').encode()
 
 # JWT配置
-app.config['JWT_SECRET_KEY'] = 'your-secret-key-change-in-production'
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'default-jwt-secret-key-change-in-production')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES_HOURS', 24)))
 
 # 初始化扩展
 jwt = JWTManager(app)
@@ -57,7 +63,8 @@ login_manager.login_view = 'login'
 # =========================
 # MongoDB
 # =========================
-client = MongoClient("mongodb://localhost:27017/")
+mongodb_uri = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+client = MongoClient(mongodb_uri)
 
 # 主库（国家主数据统一存放）
 MASTER_DB_NAME = "countriesDB"
@@ -886,29 +893,238 @@ def api_extend_vote_deadline():
 
 @app.route('/api/force_end_voting', methods=['POST'])
 def api_force_end_voting():
-    """强制结束投票"""
+    """强制结束投票并直接完成投票流程，进入共同宣言阶段"""
     try:
         data = request.get_json()
         session_id = data.get("session_id", "default")
-        
+
         cols = get_cols_by_session(session_id)
-        
-        # 将所有未完成的投票标记为弃权
-        cols["db"]["file_vote_details"].update_many(
+
+        print(f"\n{'='*60}")
+        print(f"🔧 开始强制结束投票并完成流程，session_id: {session_id}")
+        print(f"{'='*60}")
+
+        # 步骤1: 将所有未完成的投票标记为弃权
+        print(f"\n📋 步骤1: 标记未完成的投票为弃权")
+        uncompleted_count = cols["db"]["file_vote_details"].count_documents(
+            {"session_id": session_id, "vote_result": {"$exists": False}}
+        )
+
+        result = cols["db"]["file_vote_details"].update_many(
             {"session_id": session_id, "vote_result": {"$exists": False}},
             {"$set": {
                 "vote_result": "abstain",
                 "voted_at": datetime.now(UTC).isoformat() + "Z",
-                "forced": True
+                "forced": True,
+                "forced_end": True
             }}
         )
-        
+
+        print(f"✅ 已标记 {result.modified_count} 个未完成投票为弃权")
+
+        # 步骤2: 构建投票矩阵
+        print(f"\n📋 步骤2: 构建投票矩阵")
+        vote_matrix = {}
+        file_vote_details = list(cols["db"]["file_vote_details"].find({"session_id": session_id}))
+
+        for vote in file_vote_details:
+            country_id = vote.get("country_id")
+            file_id = vote.get("file_id")
+            vote_result = vote.get("vote_result")
+
+            if country_id and file_id and vote_result:
+                if country_id not in vote_matrix:
+                    vote_matrix[country_id] = {}
+                vote_matrix[country_id][file_id] = vote_result
+
+        print(f"📊 投票矩阵构建完成，包含 {len(vote_matrix)} 个国家，{len(file_vote_details)} 个投票记录")
+
+        # 步骤3: 计算每个文件的投票结果
+        print(f"\n📋 步骤3: 计算文件投票结果")
+        file_results = {}
+        for vote in file_vote_details:
+            file_id = vote.get("file_id")
+            vote_result = vote.get("vote_result")
+
+            if file_id and vote_result:
+                if file_id not in file_results:
+                    file_results[file_id] = {'agree': 0, 'disagree': 0, 'abstain': 0}
+                file_results[file_id][vote_result] += 1
+
+        print(f"📈 计算完成，共处理 {len(file_results)} 个文件的投票结果")
+
+        # 步骤4: 保存投票完成记录
+        print(f"\n📋 步骤4: 保存投票完成记录")
+        completed_at = datetime.now(UTC).isoformat() + "Z"
+        voting_record = {
+            "session_id": session_id,
+            "vote_matrix": vote_matrix,
+            "file_results": file_results,
+            "completed_at": completed_at,
+            "status": "completed",
+            "force_ended": True,
+            "uncompleted_count": uncompleted_count
+        }
+
+        cols["db"]["voting_records"].insert_one(voting_record)
+        print(f"💾 投票记录已保存到 voting_records 集合")
+
+        # 步骤5: 处理通过的文件，保存到passed_files集合和submissions集合
+        print(f"\n📋 步骤5: 处理通过的文件")
+        passed_files_list = []
+        for file_id, results in file_results.items():
+            # 判断是否通过（同意票 > 反对票）
+            is_passed = results['agree'] > results['disagree']
+
+            if is_passed:
+                print(f"🔍 处理通过的文件: file_id={file_id}")
+
+                # 多种方式获取文件信息
+                file_info = None
+                country_id = None
+                file_name = None
+                original_name = None
+
+                # 方法1: 从temp_files获取
+                temp_file = cols["db"]["temp_files"].find_one({"file_id": file_id, "session_id": session_id})
+                if temp_file:
+                    print(f"  ✅ 从temp_files找到文件信息")
+                    file_info = temp_file
+                    file_name = temp_file.get("saved_name") or temp_file.get("file_name", "")
+                    original_name = temp_file.get("original_name", file_name)
+                    country_id = temp_file.get("country_id", "")
+
+                # 方法2: 从vote_files获取
+                if not file_info:
+                    vote_file = cols["db"]["vote_files"].find_one({"file_id": file_id, "session_id": session_id})
+                    if vote_file:
+                        print(f"  ✅ 从vote_files找到文件信息")
+                        file_info = vote_file
+                        file_name = vote_file.get("saved_name") or vote_file.get("file_name", "")
+                        original_name = vote_file.get("original_name", file_name)
+                        country_id = vote_file.get("country_id", "")
+
+                # 方法3: 从file_vote_details反查country_id，再从submissions获取
+                if not file_info:
+                    print(f"  ⚠️  temp_files和vote_files都没找到，尝试从file_vote_details反查...")
+                    vote_detail = cols["db"]["file_vote_details"].find_one({
+                        "file_id": file_id,
+                        "session_id": session_id
+                    })
+                    if vote_detail:
+                        country_id = vote_detail.get("country_id", "")
+                        print(f"  🔍 从file_vote_details找到country_id: {country_id}")
+
+                        # 从submissions获取文件信息
+                        if country_id:
+                            submission = cols["submissions"].find_one({
+                                "session_id": session_id,
+                                "country_id": country_id
+                            })
+                            if submission:
+                                print(f"  ✅ 从submissions找到文件信息")
+                                file_name = submission.get("file_name", "")
+                                original_name = file_name
+                                file_info = submission
+
+                # 如果找到了文件信息，保存到passed_files
+                if file_info and file_name:
+                    print(f"  📄 文件名: {file_name}")
+                    print(f"  🌍 国家: {country_id}")
+
+                    # 保存到passed_files集合（专门用于共同宣言生成）
+                    passed_file_record = {
+                        "session_id": session_id,
+                        "file_id": file_id,
+                        "file_name": file_name,
+                        "original_name": original_name,
+                        "country_id": country_id,
+                        "vote_agree": results['agree'],
+                        "vote_disagree": results['disagree'],
+                        "vote_abstain": results['abstain'],
+                        "passed_at": completed_at,
+                        "status": "passed",
+                        "force_passed": True
+                    }
+
+                    cols["db"]["passed_files"].update_one(
+                        {"session_id": session_id, "file_id": file_id},
+                        {"$set": passed_file_record},
+                        upsert=True
+                    )
+                    print(f"  💾 已保存到passed_files集合")
+
+                    # 同时更新submissions集合，标记为通过
+                    if country_id:
+                        cols["submissions"].update_one(
+                            {"session_id": session_id, "country_id": country_id},
+                            {"$set": {
+                                "vote_passed": True,
+                                "vote_status": "passed",
+                                "vote_agree_count": results['agree'],
+                                "vote_disagree_count": results['disagree'],
+                                "vote_abstain_count": results['abstain'],
+                                "vote_completed_at": completed_at,
+                                "force_passed": True
+                            }},
+                            upsert=False
+                        )
+                        print(f"  💾 已更新submissions集合")
+
+                    passed_files_list.append({
+                        "file_id": file_id,
+                        "file_name": file_name,
+                        "original_name": original_name,
+                        "country_id": country_id,
+                        "vote_results": results
+                    })
+
+                    print(f"  ✅ 文件通过投票：{original_name} (file_id: {file_id}, 文件名: {file_name})")
+                else:
+                    print(f"  ❌ 警告：无法找到file_id={file_id}的文件信息！")
+                    print(f"     同意票: {results['agree']}, 反对票: {results['disagree']}")
+
+        print(f"📋 投票完成，共有 {len(passed_files_list)} 个文件通过（强制结束）")
+
+        # 步骤6: 更新会议状态为宣言阶段
+        print(f"\n📋 步骤6: 更新会议状态为宣言阶段")
+        cols["settings"].update_one(
+            {"session_id": session_id},
+            {"$set": {
+                "meeting_phase": "declaration",
+                "voting_completed": True,
+                "voting_completed_at": completed_at,
+                "force_ended_voting": True,
+                "passed_files_count": len(passed_files_list)
+            }},
+            upsert=True
+        )
+        print(f"🎯 会议状态已更新为宣言阶段")
+
+        print(f"\n{'='*60}")
+        print(f"✅ 强制结束投票并完成流程成功！")
+        print(f"📊 处理了 {len(file_results)} 个文件的投票")
+        print(f"✅ {len(passed_files_list)} 个文件通过投票")
+        print(f"⏭️  会议已进入共同宣言阶段")
+        print(f"{'='*60}\n")
+
         return jsonify({
             "code": 200,
-            "message": "投票已强制结束，未投票项目已标记为弃权"
+            "message": f"投票已强制结束并完成！{len(passed_files_list)}个文件通过，会议进入共同宣言阶段",
+            "data": {
+                "force_ended": True,
+                "uncompleted_count": uncompleted_count,
+                "passed_files_count": len(passed_files_list),
+                "file_results": file_results,
+                "passed_files": passed_files_list,
+                "next_phase": "declaration"
+            }
         })
-        
+
     except Exception as e:
+        print(f"❌ 强制结束投票并完成流程失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "code": 500,
             "message": f"强制结束投票失败: {str(e)}"
@@ -4067,11 +4283,21 @@ def generate_declaration():
     """生成共同宣言的API - 基于投票通过的文件和文本内容"""
     try:
         session_id = request.args.get("session_id", "default")
+        # 尝试从请求体获取参数
+        try:
+            request_data = request.get_json() or {}
+        except:
+            request_data = {}
+
         print(f"\n{'='*60}")
         print(f"🚀 生成宣言API被调用，session_id: {session_id}")
-        
+        print(f"📋 请求参数: {request_data}")
+
         cols = get_cols_by_session(session_id)
-        
+
+        # 初始化变量
+        generation_method = "未知"
+
         # 【优化】优先从passed_files集合获取通过投票的文件
         passed_files = list(cols["db"]["passed_files"].find({
             "session_id": session_id,
@@ -4225,7 +4451,10 @@ def generate_declaration():
         
         if not countries_data:
             print("❌ 没有找到有效的文本内容")
-            return jsonify({"error": "没有找到有效的文本内容"}), 400
+            return jsonify({
+                "error": "没有找到有效的文本内容",
+                "generation_method": "无数据"
+            }), 400
         
         # 调用大模型生成共同宣言
         print(f"\n{'='*60}")
@@ -4234,10 +4463,13 @@ def generate_declaration():
         print(f"🌍 参与国家数量: {len(countries_data)}")
         for i, data in enumerate(countries_data, 1):
             print(f"   {i}. {data['country']} - 文本长度: {len(data.get('content', ''))}")
-        
+
         print(f"\n🚀 开始调用大模型API...")
-        declaration_text = call_llm_for_declaration(topic, countries_data)
+        declaration_result = call_llm_for_declaration(topic, countries_data)
+        declaration_text = declaration_result.get("text", "")
+        generation_method = declaration_result.get("method", "未知")
         print(f"✅ 大模型返回宣言长度: {len(declaration_text) if declaration_text else 0}")
+        print(f"🎯 生成方式: {generation_method}")
         print(f"{'='*60}\n")
         
         # 保存生成的宣言到数据库
@@ -4266,12 +4498,14 @@ def generate_declaration():
         print(f"\n✅ 共同宣言生成成功！")
         print(f"   - 宣言长度: {len(declaration_text)} 字")
         print(f"   - 参与国家: {len(countries_data)} 个")
+        print(f"   - 生成方式: {generation_method}")
         print(f"{'='*60}\n")
-        
+
         return jsonify({
             "success": True,
             "declaration": declaration_text,
             "participating_countries": [data["country"] for data in countries_data],
+            "generation_method": generation_method,
             "analysis_info": declaration_record["analysis_info"]
         })
         
@@ -4279,7 +4513,10 @@ def generate_declaration():
         print(f"❌ 生成共同宣言时出错: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": f"生成宣言失败: {str(e)}"}), 500
+        return jsonify({
+            "error": f"生成宣言失败: {str(e)}",
+            "generation_method": "错误回退"
+        }), 500
 
 @app.route('/api/save_declaration', methods=['POST'])
 def save_declaration():
@@ -4480,11 +4717,11 @@ def api_generate_declaration_from_files():
 
         if method == 'ai':
             try:
-                # 尝试使用星火API
-                declaration = call_xf_yun_api(topic, countries_data)
-                generation_method = "星火大模型"
+                # 尝试使用千问API
+                declaration = call_qianwen_api(topic, countries_data)
+                generation_method = "通义千问"
             except Exception as e:
-                print(f"星火API失败，回退到本地生成: {e}")
+                print(f"千问API失败，回退到本地生成: {e}")
                 # 回退到本地生成
                 texts = [data['content'] for data in countries_data]
                 declaration = generate_consensus_declaration_local(texts)
@@ -4545,149 +4782,100 @@ def extract_text_from_docx(file_path):
 def call_llm_for_declaration(topic, countries_data):
     """
     调用外部AI API生成共同宣言；失败则回退到本地宣言生成功能。
-    TODO: 在此处添加外部AI API调用代码
 
-    API调用示例结构：
-    ```python
-    # 构建API请求
-    api_url = "https://your-api-endpoint.com/generate"
-    api_key = os.getenv("AI_API_KEY")
-
-    # 构建请求数据
-    request_data = {
-        "topic": topic,
-        "countries_data": countries_data,
-        "prompt": "你是一名WTO谈判专家...",
-        "max_tokens": 1000,
-        "temperature": 0.3
+    返回格式:
+    {
+        "text": "生成的宣言文本",
+        "method": "生成方式"
     }
-
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-
-    response = requests.post(api_url, json=request_data, headers=headers, timeout=120)
-    response.raise_for_status()
-
-    result = response.json()
-    return result.get("declaration", "")
-    ```
-
-    当前回退到本地宣言生成：
     """
     try:
-        # 调用科大讯飞星火API生成宣言
-        return call_xf_yun_api(topic, countries_data)
+        # 调用通义千问API生成宣言
+        declaration_text = call_qianwen_api(topic, countries_data)
+        return {
+            "text": declaration_text,
+            "method": "通义千问"
+        }
 
     except Exception as e:
-        print(f"星火API调用失败，将回退本地算法: {str(e)}")
+        print(f"千问API调用失败，将回退本地算法: {str(e)}")
         try:
-            return generate_similarity_based_declaration(topic, countries_data)
+            declaration_text = generate_similarity_based_declaration(topic, countries_data)
+            return {
+                "text": declaration_text,
+                "method": "本地算法（回退）"
+            }
         except Exception:
-            return generate_fallback_declaration(topic, countries_data)
+            declaration_text = generate_fallback_declaration(topic, countries_data)
+            return {
+                "text": declaration_text,
+                "method": "模板生成（最终回退）"
+            }
 
-def call_xf_yun_api(topic, countries_data):
+def call_qianwen_api(topic, countries_data):
     """
-    调用科大讯飞星火API生成共同宣言
-    使用WebSocket协议进行实时对话
+    调用通义千问API生成共同宣言
+    使用HTTP请求进行文本生成
     """
-    # 星火API配置（来自图片信息）
-    APPID = "c9bf2623"
-    APIKey = "14316b191bfd90e97397ac40d251dae4"
-    APISecret = "NTEwOTYzOTIhYjgjMjM5MjMwMzAwNTMz"
+    # 通义千问API配置
+    # API Key已配置，获取地址：https://dashscope.aliyuncs.com/
+    API_KEY = os.getenv('LLM_API_KEY', 'your-llm-api-key-here')
+    API_URL = os.getenv('LLM_API_URL', 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation')
 
-    # 构建请求数据（星火API格式）
+    # 构建请求数据（千问API格式）
+    prompt = build_declaration_prompt(topic, countries_data)
+
     request_data = {
-        "header": {
-            "app_id": APPID,
-            "uid": "declaration_generator"
+        "model": os.getenv('LLM_MODEL', 'qwen-turbo'),
+        "input": {
+            "prompt": prompt
         },
-        "parameter": {
-            "chat": {
-                "domain": "generalv3.5",
-                "temperature": 0.3,
-                "max_tokens": 2000,
-                "top_k": 4,
-                "chat_id": f"chat_{int(time.time())}"
-            }
-        },
-        "payload": {
-            "message": {
-                "text": build_declaration_prompt(topic, countries_data)
-            }
+        "parameters": {
+            "temperature": 0.3,
+            "max_tokens": 2000,
+            "top_p": 0.8
         }
     }
 
-    # WebSocket URL
-    ws_url = "wss://maas-api.cn-huabei-1.xf-yun.com/v1.1/chat"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
 
-    result = {"declaration": ""}
-
-    def on_message(ws, message):
-        try:
-            data = json.loads(message)
-            # 星火API返回格式解析
-            if "payload" in data:
-                payload = data["payload"]
-                if "choices" in payload and "text" in payload["choices"]:
-                    content = payload["choices"]["text"][0].get("content", "")
-                    result["declaration"] += content
-            # 检查是否结束
-            if data.get("header", {}).get("status") == 2:
-                ws.close()
-        except json.JSONDecodeError as e:
-            print(f"解析消息失败: {message}, 错误: {e}")
-
-    def on_error(ws, error):
-        print(f"WebSocket错误: {error}")
-
-    def on_close(ws, close_status_code, close_msg):
-        print(f"WebSocket连接关闭: {close_status_code}, {close_msg}")
-
-    def on_open(ws):
-        # 发送请求数据
-        ws.send(json.dumps(request_data))
-
-    # 创建WebSocket连接
-    ws_app = websocket.WebSocketApp(
-        ws_url,
-        on_message=on_message,
-        on_error=on_error,
-        on_close=on_close,
-        on_open=on_open
-    )
-
-    # 启动WebSocket连接（在单独的线程中）
-    ws_thread = threading.Thread(target=ws_app.run_forever, kwargs={
-        'sslopt': {"cert_reqs": ssl.CERT_NONE}
-    })
-    ws_thread.daemon = True
-    ws_thread.start()
-
-    # 等待结果，最多等待90秒
-    timeout = 90
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if result["declaration"]:
-            # 等待一段时间确保完整响应
-            time.sleep(2)
-            break
-        time.sleep(0.5)
-
-    # 关闭连接
     try:
-        ws_app.close()
-    except:
-        pass
+        # 发送HTTP请求
+        response = requests.post(API_URL, json=request_data, headers=headers, timeout=60)
 
-    if not result["declaration"]:
-        raise Exception("星火API未返回有效结果")
+        if response.status_code == 200:
+            result = response.json()
 
-    return result["declaration"].strip()
+            # 尝试多种可能的响应格式
+            if result.get("output") and result["output"].get("text"):
+                return result["output"]["text"].strip()
+            elif result.get("output") and result["output"].get("content"):
+                return result["output"]["content"].strip()
+            elif result.get("text"):
+                return result["text"].strip()
+            elif result.get("content"):
+                return result["content"].strip()
+            else:
+                print(f"千问API响应结构: {list(result.keys())}")
+                raise Exception("千问API返回格式错误")
+        else:
+            error_msg = f"千问API请求失败: {response.status_code} - {response.text}"
+            print(error_msg)
+            print(f"完整响应: {response.text}")
+            raise Exception(error_msg)
+
+    except requests.exceptions.RequestException as e:
+        print(f"千问API网络请求失败: {str(e)}")
+        raise Exception(f"网络请求失败: {str(e)}")
+    except Exception as e:
+        print(f"千问API调用失败: {str(e)}")
+        raise Exception(f"API调用失败: {str(e)}")
 
 def build_declaration_prompt(topic, countries_data):
-    """构建星火API的提示词"""
+    """构建千问API的提示词"""
     prompt = f"""你是一名WTO谈判专家与文本分析专家。请基于以下各国提交的文档，生成一份体现最大相似度与共识的共同宣言。
 
 【谈判主题】{topic}

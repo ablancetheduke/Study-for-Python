@@ -323,8 +323,8 @@
                     </label>
                     <div class="method-options">
                         <div class="method-option selected" data-method="ai">
-                            <div class="method-title">🌐 星火大模型</div>
-                            <div class="method-desc">华为云星火API，更智能的生成</div>
+                            <div class="method-title">🌐 通义千问</div>
+                            <div class="method-desc">阿里云千问API，更智能的生成</div>
                         </div>
                         <div class="method-option" data-method="local">
                             <div class="method-title">🏠 本地生成</div>
@@ -585,7 +585,7 @@
                 const content = document.getElementById('result-content');
 
                 meta.innerHTML = `
-                    生成方式: ${result.method === 'ai' ? '🌐 星火大模型' : '🏠 本地生成'} |
+                    生成方式: ${result.method === 'ai' ? '🌐 通义千问' : '🏠 本地生成'} |
                     文件数量: ${result.file_count} |
                     生成时间: ${new Date().toLocaleString()}
                 `;

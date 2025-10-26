@@ -470,6 +470,29 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* 强制完成通知动画 */
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes slideOutUp {
+            from {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-100%);
+            }
+        }
     </style>
 </head>
 <body>
@@ -656,10 +679,61 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('主席共同宣言管理页面已加载');
             console.log('会议信息:', { sessionId, committeeName, agenda });
-            
+
+            // 检查是否通过强制结束投票进入
+            const urlParams = new URLSearchParams(window.location.search);
+            const isForceCompleted = urlParams.get('force_completed') === 'true';
+
+            if (isForceCompleted) {
+                showForceCompletionNotice();
+            }
+
             loadPassedFiles();
             setupEventListeners();
         });
+
+        // 显示强制完成通知
+        function showForceCompletionNotice() {
+            const notice = document.createElement('div');
+            notice.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #059669, #047857);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+                z-index: 10000;
+                font-size: 14px;
+                font-weight: 600;
+                text-align: center;
+                max-width: 400px;
+                animation: slideInDown 0.5s ease;
+            `;
+            notice.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-size: 20px;">⚡</span>
+                    <strong>强制结束投票完成</strong>
+                </div>
+                <div style="font-size: 13px; opacity: 0.9;">
+                    投票已强制结束，系统已自动完成投票流程并进入共同宣言阶段
+                </div>
+            `;
+
+            document.body.appendChild(notice);
+
+            // 5秒后自动隐藏
+            setTimeout(() => {
+                notice.style.animation = 'slideOutUp 0.5s ease';
+                setTimeout(() => {
+                    if (notice.parentNode) {
+                        notice.parentNode.removeChild(notice);
+                    }
+                }, 500);
+            }, 5000);
+        }
 
         // 设置事件监听器
         function setupEventListeners() {
@@ -769,9 +843,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        generation_type: selectedOption
-                    })
+                    body: JSON.stringify({})
                 });
                 
                 const data = await response.json();
@@ -800,7 +872,8 @@
                         ? `，参与国家：${participatingCountries.join('、')}` 
                         : '';
                     
-                    showAlert(`✅ 共同宣言生成成功！基于${passedFiles.length}个通过投票的PDF文件${countryList}`, 'success');
+                    const generationMethod = data.generation_method || '未知';
+                    showAlert(`✅ 共同宣言生成成功！\n📊 基于${passedFiles.length}个通过投票的PDF文件${countryList}\n🤖 生成方式：${generationMethod}`, 'success');
                     
                     console.log('生成详情:', data);
                 } else {

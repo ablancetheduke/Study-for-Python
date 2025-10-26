@@ -690,10 +690,10 @@
                 <button class="btn btn-primary" onclick="refreshVoteData()">
                     🔄 手动刷新
                 </button>
-                <button class="btn btn-danger" onclick="forceEndVoting()">
+                <button class="btn btn-danger" onclick="forceEndVoting()" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
                     🛑 强制结束投票
                 </button>
-                <button class="btn btn-success" onclick="completeVoting()" id="complete-btn" >
+                <button class="btn btn-success" onclick="completeVoting()" id="complete-btn" style="background: linear-gradient(135deg, #059669, #047857);">
                     ✅ 完成投票
                 </button>
                 <button class="btn btn-secondary" onclick="goBack()">
@@ -1122,14 +1122,16 @@
             }
         }
 
-        // 强制结束投票
+        // 强制结束投票并直接进入共同宣言阶段
         async function forceEndVoting() {
             const stats = calculateStats();
             const pendingVotes = stats.totalVotes - stats.completedVotes;
-            
+
             if (pendingVotes > 0) {
-                if (confirm(`还有${pendingVotes}个投票未完成，确定要强制结束投票吗？未投票将视为弃权。`)) {
+                if (confirm(`还有${pendingVotes}个投票未完成，确定要强制结束投票吗？\n\n⚠️ 注意：强制结束后将自动：\n• 标记未投票为弃权\n• 计算投票结果\n• 处理通过的文件\n• 直接进入共同宣言阶段\n\n确定继续吗？`)) {
                     try {
+                        showSuccess('正在强制结束投票并完成流程...');
+
                         const response = await fetch('/api/force_end_voting', {
                             method: 'POST',
                             headers: {
@@ -1141,21 +1143,76 @@
                         });
 
                         const data = await response.json();
-                        
+
                         if (data.code === 200) {
-                            showSuccess('投票已强制结束');
-                            await loadVoteData(); // 重新加载数据
+                            const passedCount = data.data.passed_files_count;
+                            const uncompletedCount = data.data.uncompleted_count;
+
+                            showSuccess(`✅ 投票强制结束并完成！\n📊 ${passedCount}个文件通过投票\n⏭️ 会议进入共同宣言阶段\n\n2秒后跳转到共同宣言页面...`);
+
+                            // 停止自动刷新
+                            if (autoRefreshInterval) {
+                                clearInterval(autoRefreshInterval);
+                            }
+
+                            // 2秒后跳转到共同宣言页面
+                            setTimeout(() => {
+                                const url = `/chairman-declaration?session_id=${encodeURIComponent(sessionId)}&committee_name=${encodeURIComponent(committeeName)}&agenda=${encodeURIComponent(agenda)}&force_completed=true`;
+                                window.location.href = url;
+                            }, 2000);
+
                         } else {
                             showError(data.message || '强制结束失败');
                         }
-                        
+
                     } catch (error) {
                         console.error('强制结束投票失败:', error);
                         showError('强制结束时发生错误');
                     }
                 }
             } else {
-                showSuccess('所有投票都已完成，无需强制结束');
+                // 所有投票都已完成，直接跳转到共同宣言阶段
+                if (confirm('所有投票都已完成，确定要完成投票流程并进入共同宣言阶段吗？')) {
+                    try {
+                        showSuccess('正在完成投票流程...');
+
+                        const response = await fetch('/api/finalize_file_voting', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                session_id: sessionId,
+                                vote_matrix: voteMatrix,
+                                completed_at: new Date().toISOString()
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.code === 200) {
+                            showSuccess('✅ 投票流程完成！会议进入共同宣言阶段\n\n2秒后跳转到共同宣言页面...');
+
+                            // 停止自动刷新
+                            if (autoRefreshInterval) {
+                                clearInterval(autoRefreshInterval);
+                            }
+
+                            // 2秒后跳转到共同宣言页面
+                            setTimeout(() => {
+                                const url = `/chairman-declaration?session_id=${encodeURIComponent(sessionId)}&committee_name=${encodeURIComponent(committeeName)}&agenda=${encodeURIComponent(agenda)}`;
+                                window.location.href = url;
+                            }, 2000);
+
+                        } else {
+                            showError(data.message || '完成投票失败');
+                        }
+
+                    } catch (error) {
+                        console.error('完成投票失败:', error);
+                        showError('完成投票时发生错误');
+                    }
+                }
             }
         }
 
@@ -1168,7 +1225,7 @@
                 return;
             }
             
-            if (confirm(`投票统计：\n\n总投票数：${stats.totalVotes}\n同意：${stats.agreeVotes}\n反对：${stats.disagreeVotes}\n弃权：${stats.abstainVotes}\n\n确定要完成投票流程吗？`)) {
+            if (confirm(`投票统计：\n\n总投票数：${stats.totalVotes}\n同意：${stats.agreeVotes}\n反对：${stats.disagreeVotes}\n弃权：${stats.abstainVotes}\n\n✅ 确定要完成投票并进入共同宣言阶段吗？\n\n系统将自动：\n• 计算最终投票结果\n• 处理通过的文件\n• 跳转到宣言管理页面`)) {
                 try {
                     const response = await fetch('/api/finalize_file_voting', {
                         method: 'POST',
@@ -1185,7 +1242,7 @@
                     const data = await response.json();
                     
                     if (data.code === 200) {
-                        showSuccess('投票流程已完成！');
+                        showSuccess('✅ 投票流程完成！会议进入共同宣言阶段\n\n2秒后跳转到共同宣言页面...');
                         clearInterval(autoRefreshInterval);
                         
                         setTimeout(() => {
