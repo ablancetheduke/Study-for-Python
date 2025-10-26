@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宣言生成测试｜WTO 模拟谈判</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8fafc;
+        }
+
+        .header {
+            background: #1e293b;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-left h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .card-title {
+            margin: 0 0 8px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        .upload-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background: #f0f8ff;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #10b981;
+            background: #f0fff4;
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .file-list {
+            margin-top: 16px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .file-icon {
+            width: 24px;
+            height: 24px;
+            color: #6b7280;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .file-remove {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 24px;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .generate-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            margin-top: 32px;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .result-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .result-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .result-meta {
+            margin: 8px 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .result-content {
+            padding: 24px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 16px;
+            color: #dc2626;
+            margin: 16px 0;
+        }
+
+        .success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 16px;
+            color: #166534;
+            margin: 16px 0;
+        }
+
+        .method-selector {
+            margin-bottom: 24px;
+        }
+
+        .method-options {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .method-option {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .method-option:hover {
+            border-color: #3b82f6;
+        }
+
+        .method-option.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .method-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .method-desc {
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>📜 宣言生成测试</h1>
+        </div>
+        <div class="header-right">
+            <a href="/" style="color: white; text-decoration: none; margin-right: 16px;">🏠 首页</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">🤖 AI宣言生成器</h2>
+                <p class="card-subtitle">上传多个国家立场文件，自动生成WTO共同宣言</p>
+            </div>
+
+            <div class="card-body">
+                <!-- 生成方法选择 -->
+                <div class="method-selector">
+                    <label class="section-title">
+                        ⚙️ 选择生成方法
+                    </label>
+                    <div class="method-options">
+                        <div class="method-option selected" data-method="ai">
+                            <div class="method-title">🌐 通义千问</div>
+                            <div class="method-desc">阿里云千问API，更智能的生成</div>
+                        </div>
+                        <div class="method-option" data-method="local">
+                            <div class="method-title">🏠 本地生成</div>
+                            <div class="method-desc">基于关键词分析的本地算法</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 文件上传区域 -->
+                <div class="upload-section">
+                    <div class="section-title">
+                        📁 上传立场文件
+                    </div>
+
+                    <div class="file-upload-area" id="upload-area">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">点击选择文件或拖拽文件到此处</div>
+                        <div class="upload-hint">支持 PDF、Word 文档，单文件不超过 10MB，最多可上传 10 个文件</div>
+                        <input type="file" class="file-input" id="file-input" accept=".pdf,.doc,.docx" multiple style="display: none;">
+                    </div>
+
+                    <!-- 文件列表 -->
+                    <div class="file-list" id="file-list" style="display: none;">
+                        <div class="section-title">📋 已选择的文件</div>
+                    </div>
+                </div>
+
+                <!-- 生成按钮 -->
+                <button class="generate-btn" id="generate-btn" disabled>
+                    🚀 开始生成宣言
+                </button>
+            </div>
+        </div>
+
+        <!-- 结果显示区域 -->
+        <div class="result-section" id="result-section" style="display: none;">
+            <div class="result-card">
+                <div class="result-header">
+                    <h3 class="result-title">📜 生成的共同宣言</h3>
+                    <div class="result-meta" id="result-meta">正在生成中...</div>
+                </div>
+                <div class="result-content" id="result-content">
+                    <div class="loading">⏳ 正在生成宣言，请稍候...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class DeclarationGenerator {
+            constructor() {
+                this.selectedFiles = [];
+                this.selectedMethod = 'ai';
+                this.isGenerating = false;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.updateGenerateButton();
+            }
+
+            bindEvents() {
+                // 文件上传区域点击
+                document.getElementById('upload-area').addEventListener('click', () => {
+                    if (!this.isGenerating) {
+                        document.getElementById('file-input').click();
+                    }
+                });
+
+                // 文件选择
+                document.getElementById('file-input').addEventListener('change', (e) => {
+                    this.handleFileSelect(e.target.files);
+                });
+
+                // 拖拽上传
+                const uploadArea = document.getElementById('upload-area');
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    if (!this.isGenerating) {
+                        this.handleFileSelect(e.dataTransfer.files);
+                    }
+                });
+
+                // 生成方法选择
+                document.querySelectorAll('.method-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        if (!this.isGenerating) {
+                            this.selectMethod(option.dataset.method);
+                        }
+                    });
+                });
+
+                // 生成按钮
+                document.getElementById('generate-btn').addEventListener('click', () => {
+                    this.generateDeclaration();
+                });
+            }
+
+            handleFileSelect(files) {
+                Array.from(files).forEach(file => {
+                    if (this.validateFile(file)) {
+                        this.selectedFiles.push(file);
+                    }
+                });
+
+                this.updateFileList();
+                this.updateGenerateButton();
+            }
+
+            validateFile(file) {
+                // 检查文件类型
+                const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert(`不支持的文件类型: ${file.name}\n仅支持 PDF 和 Word 文档`);
+                    return false;
+                }
+
+                // 检查文件大小 (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`文件过大: ${file.name}\n文件大小不能超过 10MB`);
+                    return false;
+                }
+
+                // 检查文件数量
+                if (this.selectedFiles.length >= 10) {
+                    alert('最多只能上传 10 个文件');
+                    return false;
+                }
+
+                return true;
+            }
+
+            updateFileList() {
+                const fileList = document.getElementById('file-list');
+                const fileListContent = fileList.querySelector('.file-list-content') || document.createElement('div');
+                fileListContent.className = 'file-list-content';
+
+                if (this.selectedFiles.length > 0) {
+                    fileListContent.innerHTML = this.selectedFiles.map((file, index) => `
+                        <div class="file-item">
+                            <div class="file-icon">📄</div>
+                            <div class="file-info">
+                                <div class="file-name">${file.name}</div>
+                                <div class="file-size">${this.formatFileSize(file.size)}</div>
+                            </div>
+                            <button class="file-remove" onclick="generator.removeFile(${index})">删除</button>
+                        </div>
+                    `).join('');
+
+                    fileList.appendChild(fileListContent);
+                    fileList.style.display = 'block';
+                } else {
+                    fileList.style.display = 'none';
+                }
+            }
+
+            removeFile(index) {
+                if (!this.isGenerating) {
+                    this.selectedFiles.splice(index, 1);
+                    this.updateFileList();
+                    this.updateGenerateButton();
+                }
+            }
+
+            selectMethod(method) {
+                this.selectedMethod = method;
+
+                // 更新UI
+                document.querySelectorAll('.method-option').forEach(option => {
+                    option.classList.toggle('selected', option.dataset.method === method);
+                });
+            }
+
+            updateGenerateButton() {
+                const btn = document.getElementById('generate-btn');
+                btn.disabled = this.selectedFiles.length === 0 || this.isGenerating;
+
+                if (this.isGenerating) {
+                    btn.textContent = '⏳ 正在生成中...';
+                } else if (this.selectedFiles.length === 0) {
+                    btn.textContent = '🚀 请先选择文件';
+                } else {
+                    btn.textContent = `🚀 生成宣言 (${this.selectedFiles.length} 个文件)`;
+                }
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            async generateDeclaration() {
+                if (this.selectedFiles.length === 0 || this.isGenerating) return;
+
+                this.isGenerating = true;
+                this.updateGenerateButton();
+
+                // 显示结果区域
+                document.getElementById('result-section').style.display = 'block';
+                document.getElementById('result-content').innerHTML = '<div class="loading">⏳ 正在生成宣言，请稍候...</div>';
+
+                try {
+                    // 创建FormData上传文件
+                    const formData = new FormData();
+                    this.selectedFiles.forEach((file, index) => {
+                        formData.append(`file_${index}`, file);
+                    });
+                    formData.append('method', this.selectedMethod);
+
+                    // 调用后端API
+                    const response = await fetch('/api/generate_declaration_from_files', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.displayResult(result);
+                    } else {
+                        throw new Error(result.error || '生成失败');
+                    }
+
+                } catch (error) {
+                    console.error('生成失败:', error);
+                    document.getElementById('result-content').innerHTML = `
+                        <div class="error">
+                            ❌ 生成失败: ${error.message}
+                            <br><br>
+                            🔧 请检查：
+                            <br>• 文件格式是否正确（PDF/Word）
+                            <br>• 文件大小是否超过限制（10MB）
+                            <br>• 网络连接是否正常
+                        </div>
+                    `;
+                } finally {
+                    this.isGenerating = false;
+                    this.updateGenerateButton();
+                }
+            }
+
+            displayResult(result) {
+                const meta = document.getElementById('result-meta');
+                const content = document.getElementById('result-content');
+
+                meta.innerHTML = `
+                    生成方式: ${result.method === 'ai' ? '🌐 通义千问' : '🏠 本地生成'} |
+                    文件数量: ${result.file_count} |
+                    生成时间: ${new Date().toLocaleString()}
+                `;
+
+                content.innerHTML = `
+                    <div class="success">
+                        ✅ 宣言生成成功！
+                    </div>
+                    <div style="margin-top: 16px;">
+                        ${result.declaration.replace(/\n/g, '<br>')}
+                    </div>
+                `;
+
+                // 添加复制按钮
+                const copyBtn = document.createElement('button');
+                copyBtn.innerHTML = '📋 复制宣言';
+                copyBtn.className = 'generate-btn';
+                copyBtn.style.width = 'auto';
+                copyBtn.style.marginTop = '16px';
+                copyBtn.onclick = () => {
+                    navigator.clipboard.writeText(result.declaration).then(() => {
+                        copyBtn.textContent = '✅ 已复制';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '📋 复制宣言';
+                        }, 2000);
+                    });
+                };
+
+                content.appendChild(copyBtn);
+            }
+        }
+
+        // 全局访问
+        let generator;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            generator = new DeclarationGenerator();
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主席点名控制台｜WTO 模拟谈判</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .session-info {
+            background: #f8fafc;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .info-value {
+            color: #6b7280;
+        }
+        
+        .voting-mechanism {
+            background: #ecfdf5;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .panel {
+            padding: 30px;
+            border-right: 1px solid #e2e8f0;
+        }
+        
+        .panel:last-child {
+            border-right: none;
+        }
+        
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .panel-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .countries-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .country-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+        }
+        
+        .country-item::before {
+            content: '👆';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        
+        .country-item:hover {
+            border-color: #3b82f6;
+            transform: translateX(8px) translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+        }
+        
+        .country-item:hover::before {
+            opacity: 1;
+            left: -24px;
+        }
+        
+        .country-item.present {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+        
+        .country-item.present:hover {
+            border-color: #059669;
+        }
+        
+        .country-item.absent {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .country-item.absent:hover {
+            border-color: #dc2626;
+        }
+        
+        .country-flag {
+            width: 32px;
+            height: 24px;
+            object-fit: cover;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .country-name {
+            font-weight: 600;
+            color: #111827;
+            flex: 1;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-badge.present {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-badge.absent {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .status-badge.pending {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .controls {
+            background: #f8fafc;
+            padding: 30px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .btn-warning:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .panel {
+                padding: 20px;
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            
+            .panel:last-child {
+                border-bottom: none;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="header">
+            <h1>🎯 主席点名控制台</h1>
+            <p>管理参与国家的到场状态，确保会议顺利进行</p>
+            <p style="font-size: 14px; opacity: 0.8; margin-top: 8px;">💡 提示：点击"开始点名"后，单独点击每个国家进行点名，或使用"一键全部到场"快速标记</p>
+        </div>
+        
+        <!-- 会议信息 -->
+        <div class="session-info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">会议编号：</span>
+                    <span class="info-value" id="session-display">{{ session_id or '未设置' }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">委员会：</span>
+                    <span class="info-value" id="committee-display">{{ committee_name or '未设置' }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">议题：</span>
+                    <span class="info-value" id="agenda-display">{{ agenda or '未设置' }}</span>
+                </div>
+            </div>
+            <div class="voting-mechanism">
+                <strong>投票机制：</strong>
+                <span id="mechanism-name">{{ mechanism_name or '未设置' }}</span>
+                <span style="color: #6b7280;">({{ mechanism_requirement or '未设置' }})</span>
+            </div>
+        </div>
+        
+        <!-- 提示信息 -->
+        <div id="alert" class="alert"></div>
+        
+        <!-- 主要内容 -->
+        <div class="main-content">
+            <!-- 参与国家列表 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">🌍</div>
+                    <div class="panel-title">参与国家列表</div>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" class="search-input" id="search-input" placeholder="搜索国家名称...">
+                </div>
+                
+                <div class="countries-list" id="countries-list">
+                    <div class="loading">正在加载参与国家...</div>
+                </div>
+            </div>
+            
+            <!-- 点名状态 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-icon">📋</div>
+                    <div class="panel-title">点名状态</div>
+                </div>
+                
+                <div class="countries-list" id="rollcall-status">
+                    <div class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <div>点击"开始点名"开始记录到场状态</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 控制面板 -->
+        <div class="controls">
+            <!-- 统计信息 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-countries">0</div>
+                    <div class="stat-label">总国家数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="present-count" style="color: #10b981;">0</div>
+                    <div class="stat-label">已到场</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="absent-count" style="color: #ef4444;">0</div>
+                    <div class="stat-label">未到场</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pending-count" style="color: #f59e0b;">0</div>
+                    <div class="stat-label">待点名</div>
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn btn-primary" id="start-rollcall-btn">
+                    🎤 开始点名
+                </button>
+                <button class="btn btn-success" id="mark-all-present-btn" disabled>
+                    ✅ 全部到场
+                </button>
+                <button class="btn btn-warning" id="mark-all-absent-btn" disabled>
+                    ❌ 全部未到场
+                </button>
+                <button class="btn btn-secondary" id="reset-rollcall-btn" disabled>
+                    🔄 重置点名
+                </button>
+                <button class="btn btn-primary" id="complete-rollcall-btn" disabled>
+                    🏁 完成点名
+                </button>
+                <button class="btn btn-secondary" onclick="history.back()">
+                    ← 返回
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let sessionId = "{{ session_id or '' }}";
+        let committeeName = "{{ committee_name or '' }}";
+        let agenda = "{{ agenda or '' }}";
+        let mechanismName = "{{ mechanism_name or '' }}";
+        let mechanismRequirement = "{{ mechanism_requirement or '' }}";
+        
+        let allCountries = [];
+        let rollcallData = {};
+        let isRollcallActive = false;
+        let searchTerm = '';
+        
+        // DOM 元素
+        const countriesList = document.getElementById('countries-list');
+        const rollcallStatus = document.getElementById('rollcall-status');
+        const searchInput = document.getElementById('search-input');
+        const alert = document.getElementById('alert');
+
+        // 统计元素
+        const totalCountriesEl = document.getElementById('total-countries');
+        const presentCountEl = document.getElementById('present-count');
+        const absentCountEl = document.getElementById('absent-count');
+        const attendanceRateEl = document.getElementById('attendance-rate');
+
+        // 按钮元素
+        const startRollcallBtn = document.getElementById('start-rollcall-btn');
+        const markAllPresentBtn = document.getElementById('mark-all-present-btn');
+        const markAllAbsentBtn = document.getElementById('mark-all-absent-btn');
+        const resetRollcallBtn = document.getElementById('reset-rollcall-btn');
+        const completeRollcallBtn = document.getElementById('complete-rollcall-btn');
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCountries();
+            setupEventListeners();
+        });
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 搜索功能
+            searchInput.addEventListener('input', function(e) {
+                searchTerm = e.target.value.toLowerCase();
+                renderCountries();
+            });
+            
+            // 开始点名
+            startRollcallBtn.addEventListener('click', startRollcall);
+            
+            // 全部到场
+            markAllPresentBtn.addEventListener('click', () => markAllCountries('present'));
+            
+            // 全部未到场
+            markAllAbsentBtn.addEventListener('click', () => markAllCountries('absent'));
+            
+            // 重置点名
+            resetRollcallBtn.addEventListener('click', resetRollcall);
+            
+            // 完成点名
+            completeRollcallBtn.addEventListener('click', completeRollcall);
+        }
+        
+        // 加载国家列表
+        async function loadCountries() {
+            try {
+                // 获取已加入会议的参与国（使用 only_participants=true）
+                const response = await fetch(`/api/countries?session_id=${encodeURIComponent(sessionId)}&only_participants=true`);
+                const data = await response.json();
+
+                if (data.code === 200 && data.data) {
+                    // 使用已保存的参与国数据
+                    allCountries = data.data.map(country => ({
+                        id: country.id,
+                        name: country.name,
+                        flag_url: country.flag_url
+                    }));
+                    
+                    console.log('加载到的参与国家:', allCountries);
+                    renderCountries();
+                    updateStats();
+                } else {
+                    // 如果没有参与国，显示空状态
+                    allCountries = [];
+                    renderCountries();
+                    updateStats();
+                }
+            } catch (error) {
+                console.error('加载参与国家失败:', error);
+                showError('加载参与国家失败，请刷新页面重试');
+            }
+        }
+        
+        // 渲染国家列表
+        function renderCountries() {
+            if (allCountries.length === 0) {
+                countriesList.innerHTML = '<div class="empty-state"><div class="empty-icon">🌍</div><div>暂无参与国家</div><div style="margin-top: 8px; font-size: 14px;">等待与会国通过门户加入会议</div></div>';
+                return;
+            }
+            
+            const filteredCountries = allCountries.filter(country => 
+                country.name.toLowerCase().includes(searchTerm)
+            );
+            
+            if (filteredCountries.length === 0) {
+                countriesList.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div>未找到匹配的国家</div></div>';
+                return;
+            }
+            
+            countriesList.innerHTML = filteredCountries.map(country => {
+                const status = rollcallData[country.id] || 'pending';
+                const statusClass = status === 'present' ? 'present' : status === 'absent' ? 'absent' : '';
+                const statusBadge = getStatusBadge(status);
+                
+                return `
+                    <div class="country-item ${statusClass}" onclick="toggleCountryStatus('${country.id}')">
+                        <img class="country-flag" src="${country.flag_url}" alt="${country.name}" onerror="this.src='/static/flags/default.png'">
+                        <span class="country-name">${country.name}</span>
+                        <span class="status-badge ${status}">${statusBadge}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 获取状态徽章
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'present': return '✅ 已到场';
+                case 'absent': return '❌ 未到场';
+                default: return '⏳ 待点名';
+            }
+        }
+        
+        // 切换国家状态（单独点击每个国家）
+        async function toggleCountryStatus(countryId) {
+            if (!isRollcallActive) {
+                showError('请先点击"开始点名"按钮');
+                return;
+            }
+            
+            const currentStatus = rollcallData[countryId];
+            let newStatus;
+            
+            // 状态循环：待点名 -> 已到场 -> 未到场 -> 已到场 ...
+            if (currentStatus === 'present') {
+                newStatus = 'absent';
+            } else if (currentStatus === 'absent') {
+                newStatus = 'present';
+            } else {
+                // 第一次点击，默认设为到场
+                newStatus = 'present';
+            }
+            
+            rollcallData[countryId] = newStatus;
+            
+            // 实时保存到数据库
+            try {
+                const response = await fetch('/api/rollcall/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        country_id: countryId,
+                        arrived: newStatus === 'present'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.code !== 200) {
+                    console.warn('保存点名状态失败:', data.message);
+                }
+            } catch (error) {
+                console.error('保存点名状态失败:', error);
+            }
+            
+            // 更新界面
+            renderCountries();
+            renderRollcallStatus();
+            updateStats();
+            
+            // 获取国家名称
+            const country = allCountries.find(c => c.id === countryId);
+            const countryName = country ? country.name : '该国家';
+            const statusText = newStatus === 'present' ? '✅ 已到场' : '❌ 未到场';
+            
+            // 显示提示（不阻塞操作）
+            console.log(`${countryName} - ${statusText}`);
+        }
+        
+        // 渲染点名状态（右侧面板显示已点名的国家）
+        function renderRollcallStatus() {
+            const countriesWithStatus = allCountries.filter(country => 
+                rollcallData[country.id] && rollcallData[country.id] !== 'pending'
+            );
+            
+            if (countriesWithStatus.length === 0) {
+                rollcallStatus.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <div>暂无点名记录</div>
+                        <div style="margin-top: 8px; font-size: 14px;">点击左侧国家进行点名</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            rollcallStatus.innerHTML = countriesWithStatus.map(country => {
+                const status = rollcallData[country.id];
+                const statusClass = status === 'present' ? 'present' : 'absent';
+                const statusBadge = getStatusBadge(status);
+                
+                return `
+                    <div class="country-item ${statusClass}" onclick="toggleCountryStatus('${country.id}')">
+                        <img class="country-flag" src="${country.flag_url}" alt="${country.name}" onerror="this.src='/static/flags/default.png'">
+                        <span class="country-name">${country.name}</span>
+                        <span class="status-badge ${status}">${statusBadge}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 开始点名
+        function startRollcall() {
+            isRollcallActive = true;
+            rollcallData = {};
+
+            startRollcallBtn.disabled = true;
+            markAllPresentBtn.disabled = false;
+            markAllAbsentBtn.disabled = false;
+            resetRollcallBtn.disabled = false;
+
+            renderCountries();
+            renderRollcallStatus();
+            updateStats();
+
+            showSuccess('点名已开始，请点击国家进行状态标记');
+        }
+        
+        // 标记所有国家（一键全部到场/未到场）
+        async function markAllCountries(status) {
+            if (!isRollcallActive) {
+                showError('请先开始点名');
+                return;
+            }
+            
+            // 标记所有国家
+            allCountries.forEach(country => {
+                rollcallData[country.id] = status;
+            });
+            
+            // 批量保存到数据库
+            try {
+                const updates = allCountries.map(country => ({
+                    country_id: country.id,
+                    arrived: status === 'present'
+                }));
+                
+                const response = await fetch('/api/rollcall/batch_update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        updates: updates
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.code !== 200) {
+                    console.warn('批量保存点名状态失败:', data.message);
+                }
+            } catch (error) {
+                console.error('批量保存点名状态失败:', error);
+            }
+            
+            renderCountries();
+            renderRollcallStatus();
+            updateStats();
+            
+            const statusText = status === 'present' ? '已到场' : '未到场';
+            showSuccess(`已标记所有 ${allCountries.length} 个国家为${statusText}`);
+        }
+        
+        // 重置点名
+        function resetRollcall() {
+            if (confirm('确定要重置所有点名状态吗？')) {
+                rollcallData = {};
+                renderCountries();
+                renderRollcallStatus();
+                updateStats();
+                showSuccess('点名状态已重置');
+            }
+        }
+        
+        // 完成点名
+        async function completeRollcall() {
+            const presentCount = Object.values(rollcallData).filter(status => status === 'present').length;
+            const totalCount = allCountries.length;
+
+            if (presentCount === 0) {
+                showError('请至少标记一个到场国家');
+                return;
+            }
+
+            if (confirm(`确认完成点名？\n到场国家：${presentCount}/${totalCount}`)) {
+                try {
+                    // 保存点名结果到数据库
+                    showSuccess('正在保存点名结果...');
+
+                    // 准备批量更新数据
+                    const updates = [];
+                    Object.keys(rollcallData).forEach(countryId => {
+                        const status = rollcallData[countryId];
+                        updates.push({
+                            country_id: countryId,
+                            arrived: status === 'present'
+                        });
+                    });
+
+                    const response = await fetch('/api/rollcall/batch_update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            updates: updates
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.code === 200) {
+                        showSuccess(`点名完成！到场率：${Math.round((presentCount / totalCount) * 100)}%`);
+
+                        // 禁用所有按钮
+                        startRollcallBtn.disabled = true;
+                        markAllPresentBtn.disabled = true;
+                        markAllAbsentBtn.disabled = true;
+                        resetRollcallBtn.disabled = true;
+                        completeRollcallBtn.disabled = true;
+
+                        // 推进会议阶段到文件提交
+                        try {
+                            const advanceResponse = await fetch('/api/meeting/advance_phase', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    session_id: sessionId,
+                                    target_phase: 'file_submission'
+                                })
+                            });
+
+                            const advanceData = await advanceResponse.json();
+                            if (advanceData.code === 200) {
+                                console.log('会议阶段已推进到文件提交阶段');
+                            } else {
+                                console.warn('推进会议阶段失败:', advanceData.message);
+                            }
+                        } catch (error) {
+                            console.error('推进会议阶段时发生错误:', error);
+                        }
+
+                        // 2秒后跳转到文件提交监控页面
+                        setTimeout(() => {
+                            const url = `/chairman-file-submission?session_id=${encodeURIComponent(sessionId)}&committee_name=${encodeURIComponent(committeeName)}&agenda=${encodeURIComponent(agenda)}&mechanism_name=${encodeURIComponent(mechanismName)}&mechanism_requirement=${encodeURIComponent(mechanismRequirement)}`;
+                            window.location.href = url;
+                        }, 2000);
+
+                    } else {
+                        showError('保存点名结果失败：' + (data.message || '未知错误'));
+                    }
+
+                } catch (error) {
+                    console.error('保存点名结果失败:', error);
+                    showError('保存点名结果时发生错误');
+                }
+            }
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            const total = allCountries.length;
+            const present = Object.values(rollcallData).filter(status => status === 'present').length;
+            const absent = Object.values(rollcallData).filter(status => status === 'absent').length;
+            const pending = total - present - absent;
+            const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+
+            // 更新统计显示
+            if (totalCountriesEl) totalCountriesEl.textContent = total;
+            if (presentCountEl) presentCountEl.textContent = present;
+            if (absentCountEl) absentCountEl.textContent = absent;
+            if (document.getElementById('pending-count')) {
+                document.getElementById('pending-count').textContent = pending;
+            }
+            if (attendanceRateEl) attendanceRateEl.textContent = rate + '%';
+
+            // 控制按钮状态
+            if (isRollcallActive) {
+                // 如果点名已开始，启用相关按钮
+                markAllPresentBtn.disabled = false;
+                markAllAbsentBtn.disabled = false;
+                resetRollcallBtn.disabled = false;
+
+                // 完成点名按钮：只要有到场的国家就可以完成
+                completeRollcallBtn.disabled = present === 0;
+            } else {
+                // 如果点名未开始，禁用相关按钮
+                markAllPresentBtn.disabled = true;
+                markAllAbsentBtn.disabled = true;
+                resetRollcallBtn.disabled = true;
+                completeRollcallBtn.disabled = true;
+            }
+        }
+        
+        // 显示成功消息
+        function showSuccess(message) {
+            alert.className = 'alert alert-success show';
+            alert.textContent = message;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 显示错误消息
+        function showError(message) {
+            alert.className = 'alert alert-error show';
+            alert.textContent = message;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

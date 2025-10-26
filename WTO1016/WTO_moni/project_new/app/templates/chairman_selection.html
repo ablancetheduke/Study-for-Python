@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主席选择｜WTO 模拟谈判</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .chairman-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+            color: #2c3e50;
+        }
+        
+        .header p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 16px;
+        }
+        
+        .form-section {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .session-info {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .session-info h3 {
+            margin: 0 0 8px;
+            color: #1e293b;
+            font-size: 18px;
+        }
+        
+        .session-info p {
+            margin: 0;
+            color: #64748b;
+        }
+        
+        .chairman-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        
+        .chairman-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        
+        .chairman-item:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chairman-item.selected {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+        
+        .chairman-flag {
+            width: 40px;
+            height: 30px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .chairman-name {
+            font-weight: 500;
+            color: #111827;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #dc2626;
+        }
+        
+        .selected-info {
+            background: #ecfdf5;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .selected-info.show {
+            display: block;
+        }
+        
+        .selected-chairman {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .selected-chairman .chairman-flag {
+            width: 48px;
+            height: 36px;
+        }
+        
+        .selected-chairman .chairman-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #065f46;
+        }
+        
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background-color: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+        
+        .alert-error {
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .form-hint {
+            display: block;
+            margin-top: 4px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .form-actions .btn {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <h1>WTO 模拟谈判 - 主席选择</h1>
+        </div>
+    </header>
+
+    <div class="chairman-container">
+        <div class="header">
+            <h1>主席控制台</h1>
+            <p>您已作为主席身份进入会议，以下是实时参与的国家</p>
+        </div>
+
+        <!-- 提示信息 -->
+        <div id="alert" class="alert"></div>
+
+        <!-- 会议信息 -->
+        <div class="session-info">
+            <h3>会议信息</h3>
+            <p>会议编号：<strong id="session-display">{{ session_id or '未设置' }}</strong></p>
+            <p>委员会：<strong id="committee-display">{{ committee_name or '未设置' }}</strong></p>
+            <p>议题：<strong id="agenda-display">{{ agenda or '未设置' }}</strong></p>
+        </div>
+
+        <!-- 会议创建/加载表单 -->
+        <div class="form-section">
+            <h3>会议设置</h3>
+            <div class="form-group">
+                <label for="session-input">会议编号</label>
+                <input type="text" id="session-input" placeholder="请输入5位数字会议编号" value="{{ session_id or '' }}" maxlength="5">
+                <small class="form-hint">会议编号用于与会国加入会议</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="committee-input">委员会名称</label>
+                <input type="text" id="committee-input" placeholder="请输入委员会名称" value="{{ committee_name or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="agenda-input">议题</label>
+                <input type="text" id="agenda-input" placeholder="请输入议题" value="{{ agenda or '' }}">
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" id="create-meeting-btn" class="btn btn-primary">创建新会议</button>
+                <button type="button" id="load-session-btn" class="btn btn-secondary">加载现有会议</button>
+            </div>
+        </div>
+
+        <!-- 主席身份确认 -->
+        <div class="selected-info" id="chairman-info">
+            <div class="selected-chairman">
+                <span class="chairman-name">👑 您已作为主席身份进入会议</span>
+            </div>
+        </div>
+
+        <!-- 参与国家列表 -->
+        <div class="form-section">
+            <h3>参与国家列表</h3>
+            <div id="participants-container">
+                <div class="loading">正在加载参与国家...</div>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="actions">
+            <button class="btn btn-secondary" onclick="history.back()">返回</button>
+            <button class="btn btn-primary" id="continue-btn">继续设置投票机制</button>
+        </div>
+    </div>
+
+    <script>
+        let allCountries = [];
+        let sessionId = "{{ session_id or '' }}";
+        let committeeName = "{{ committee_name or '' }}";
+        let agenda = "{{ agenda or '' }}";
+
+        const elements = {
+            sessionInput: document.getElementById('session-input'),
+            committeeInput: document.getElementById('committee-input'),
+            agendaInput: document.getElementById('agenda-input'),
+            loadSessionBtn: document.getElementById('load-session-btn'),
+            participantsContainer: document.getElementById('participants-container'),
+            continueBtn: document.getElementById('continue-btn'),
+            chairmanInfo: document.getElementById('chairman-info'),
+            sessionDisplay: document.getElementById('session-display'),
+            committeeDisplay: document.getElementById('committee-display'),
+            agendaDisplay: document.getElementById('agenda-display'),
+            alert: document.getElementById('alert')
+        };
+
+        // 显示提示信息
+        function showAlert(message, type = 'success') {
+            elements.alert.textContent = message;
+            elements.alert.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                elements.alert.classList.remove('show');
+            }, 5000);
+        }
+
+        // 加载会议信息
+        async function loadSessionInfo() {
+            const sessionIdInput = elements.sessionInput.value.trim();
+            
+            if (!sessionIdInput) {
+                showAlert('请输入会议编号', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/get_session_info?session_id=${encodeURIComponent(sessionIdInput)}`);
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    sessionId = sessionIdInput;
+                    committeeName = data.data.committee_name || '';
+                    agenda = data.data.agenda || '';
+                    
+                    // 更新显示
+                    elements.sessionDisplay.textContent = sessionId;
+                    elements.committeeDisplay.textContent = committeeName;
+                    elements.agendaDisplay.textContent = agenda;
+                    elements.committeeInput.value = committeeName;
+                    elements.agendaInput.value = agenda;
+                    
+                    showAlert('会议信息加载成功', 'success');
+                    
+                    // 加载参与国家列表
+                    await loadParticipants();
+                    
+                    // 开始实时刷新
+                    startRealtimeRefresh();
+                } else {
+                    showAlert('加载会议信息失败：' + (data.message || '未知错误'), 'error');
+                }
+            } catch (error) {
+                console.error('加载会议信息失败:', error);
+                showAlert('网络错误，请检查连接后重试', 'error');
+            }
+        }
+
+        // 加载参与国家列表（只加载已通过与会国门户加入的国家）
+        async function loadParticipants() {
+            try {
+                const response = await fetch(`/api/countries?session_id=${encodeURIComponent(sessionId)}&only_participants=true`);
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    allCountries = data.data || [];
+                    renderParticipants(allCountries);
+                } else {
+                    showError('加载参与国家失败：' + (data.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('加载参与国家失败:', error);
+                showError('网络错误，请检查连接后重试');
+            }
+        }
+
+        // 渲染参与国家列表
+        function renderParticipants(countries) {
+            if (countries.length === 0) {
+                elements.participantsContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #6b7280;"><div style="font-size: 48px; margin-bottom: 16px;">🌍</div><div>暂无参与国家</div><div style="margin-top: 8px; font-size: 14px;">等待与会国通过门户加入会议...</div></div>';
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'chairman-grid';
+
+            countries.forEach(country => {
+                const item = document.createElement('div');
+                item.className = 'chairman-item';
+                item.dataset.countryId = country.id;
+                
+                item.innerHTML = `
+                    <img class="chairman-flag" src="${country.flag_url}" alt="${country.name}" onerror="this.src='/static/flags/default.png'">
+                    <span class="chairman-name">${country.name}</span>
+                `;
+
+                // 移除点击事件，这里只是显示参与国家
+                grid.appendChild(item);
+            });
+
+            elements.participantsContainer.innerHTML = '';
+            elements.participantsContainer.appendChild(grid);
+        }
+
+        // 继续到投票机制设置
+        async function continueToVotingMechanism() {
+            if (!sessionId) {
+                showAlert('请先加载会议信息', 'error');
+                return;
+            }
+            
+            try {
+                // 先推进会议阶段到rollcall
+                const advanceResponse = await fetch('/api/meeting/advance_phase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        target_phase: 'rollcall'
+                    })
+                });
+                
+                const advanceData = await advanceResponse.json();
+                if (advanceData.code === 200) {
+                    console.log('会议阶段已推进到点名阶段');
+                } else {
+                    console.warn('推进会议阶段失败:', advanceData.message);
+                }
+            } catch (error) {
+                console.error('推进会议阶段时发生错误:', error);
+            }
+            
+            // 直接跳转到投票机制设置页面（现在会重定向到点名页面）
+            const url = `/voting-mechanism?session_id=${encodeURIComponent(sessionId)}&committee_name=${encodeURIComponent(committeeName)}&agenda=${encodeURIComponent(agenda)}`;
+            window.location.href = url;
+        }
+
+        // 显示错误
+        function showError(message) {
+            elements.participantsContainer.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        // 创建新会议
+        async function createNewMeeting() {
+            const sessionInput = document.getElementById('session-input').value.trim();
+            const committeeInput = document.getElementById('committee-input').value.trim();
+            const agendaInput = document.getElementById('agenda-input').value.trim();
+            
+            if (!sessionInput || !committeeInput || !agendaInput) {
+                showAlert('请填写所有必要信息', 'error');
+                return;
+            }
+            
+            if (sessionInput.length !== 5 || !/^\d+$/.test(sessionInput)) {
+                showAlert('会议编号必须是5位数字', 'error');
+                return;
+            }
+            
+            try {
+                // 检查会议是否已存在
+                const checkResponse = await fetch(`/api/get_session_info?session_id=${encodeURIComponent(sessionInput)}`);
+                const checkData = await checkResponse.json();
+                
+                if (checkData.code === 200) {
+                    showAlert('会议编号已存在，请使用其他编号或选择"加载现有会议"', 'error');
+                    return;
+                }
+                
+                // 创建新会议
+                const createResponse = await fetch('/api/create_new_session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionInput,
+                        committee_name: committeeInput,
+                        agenda: agendaInput,
+                        mechanism_name: '',
+                        mechanism_requirement: ''
+                    })
+                });
+                
+                const createData = await createResponse.json();
+                
+                if (createData.code === 200) {
+                    showAlert('会议创建成功！等待与会国加入...', 'success');
+                    sessionId = sessionInput;
+                    committeeName = committeeInput;
+                    agenda = agendaInput;
+                    
+                    // 更新显示
+                    document.getElementById('session-display').textContent = sessionId;
+                    document.getElementById('committee-display').textContent = committeeName;
+                    document.getElementById('agenda-display').textContent = agenda;
+                    
+                    // 加载参与国家（新会议应该为空）
+                    await loadParticipants();
+                    
+                    // 开始实时刷新
+                    startRealtimeRefresh();
+                } else {
+                    showAlert('创建会议失败：' + (createData.message || '未知错误'), 'error');
+                }
+            } catch (error) {
+                console.error('创建会议失败:', error);
+                showAlert('网络错误，请检查连接后重试', 'error');
+            }
+        }
+
+        // 开始实时刷新参与国列表
+        let refreshInterval = null;
+        function startRealtimeRefresh() {
+            // 每3秒刷新一次参与国列表
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+            refreshInterval = setInterval(() => {
+                if (sessionId) {
+                    loadParticipants();
+                }
+            }, 3000);
+        }
+
+        function stopRealtimeRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        // 事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化时显示空的参与国列表
+            renderParticipants([]);
+            
+            // 如果已有session_id，自动加载会议信息
+            if (sessionId) {
+                loadSessionInfo();
+                // 开始实时刷新
+                startRealtimeRefresh();
+            }
+            
+            elements.loadSessionBtn.addEventListener('click', loadSessionInfo);
+            
+            elements.continueBtn.addEventListener('click', continueToVotingMechanism);
+            
+            // 添加创建新会议按钮事件
+            document.getElementById('create-meeting-btn').addEventListener('click', createNewMeeting);
+
+            // 页面卸载时停止刷新
+            window.addEventListener('beforeunload', stopRealtimeRefresh);
+        });
+    </script>
+</body>
+</html>

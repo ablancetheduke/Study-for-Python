@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投票机制设置｜WTO 模拟谈判系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .header .subtitle {
+            color: #64748b;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .session-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #1e40af;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mechanism-option {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .mechanism-option:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+
+        .mechanism-option.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .mechanism-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .mechanism-desc {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .mechanism-requirement {
+            font-size: 12px;
+            color: #059669;
+            background: #d1fae5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        .preview-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .preview-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .preview-content {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 25px 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .alert.show {
+            transform: translateX(0);
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="header">
+            <h1>🗳️ 投票机制设置</h1>
+            <div class="subtitle">为本次会议选择合适的投票决策机制</div>
+            
+            <div class="session-info">
+                <div class="info-item">
+                    <span>📋</span>
+                    <span>会议编号：<strong id="session-display">{{ session_id }}</strong></span>
+                </div>
+                <div class="info-item">
+                    <span>🏛️</span>
+                    <span>委员会：<strong id="committee-display">{{ committee_name }}</strong></span>
+                </div>
+                <div class="info-item">
+                    <span>📄</span>
+                    <span>议题：<strong id="agenda-display">{{ agenda }}</strong></span>
+                </div>
+                <div class="info-item">
+                    <span>👤</span>
+                    <span>主席：<strong id="chairman-display">{{ chairman_name }}</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- 投票机制选择 -->
+            <div class="card">
+                <h2>⚖️ 选择投票机制</h2>
+                
+                <div class="mechanism-option" data-mechanism="simple_majority" onclick="selectMechanism('simple_majority')">
+                    <div class="mechanism-title">简单多数决</div>
+                    <div class="mechanism-desc">获得超过半数赞成票即可通过提案，是最常用的投票机制</div>
+                    <div class="mechanism-requirement">需要 > 50% 赞成票</div>
+                </div>
+
+                <div class="mechanism-option" data-mechanism="absolute_majority" onclick="selectMechanism('absolute_majority')">
+                    <div class="mechanism-title">绝对多数决</div>
+                    <div class="mechanism-desc">需要获得全体成员的绝对多数支持，要求更高的共识</div>
+                    <div class="mechanism-requirement">需要 ≥ 2/3 赞成票</div>
+                </div>
+
+                <div class="mechanism-option" data-mechanism="consensus" onclick="selectMechanism('consensus')">
+                    <div class="mechanism-title">协商一致</div>
+                    <div class="mechanism-desc">所有成员都不明确反对，体现WTO传统决策方式</div>
+                    <div class="mechanism-requirement">无明确反对票</div>
+                </div>
+
+                <div class="mechanism-option" data-mechanism="weighted_vote" onclick="selectMechanism('weighted_vote')">
+                    <div class="mechanism-title">加权投票</div>
+                    <div class="mechanism-desc">根据国家经济实力或贸易额分配不同权重</div>
+                    <div class="mechanism-requirement">按权重计算结果</div>
+                </div>
+            </div>
+
+            <!-- 机制预览 -->
+            <div class="card">
+                <h2>📊 机制预览</h2>
+                <div id="mechanism-preview">
+                    <div style="text-align: center; color: #94a3b8; padding: 40px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🗳️</div>
+                        <div>请选择一个投票机制查看详情</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="action-buttons">
+            <a href="javascript:history.back()" class="btn btn-secondary">
+                ← 返回上一步
+            </a>
+            
+            <button id="confirm-btn" class="btn btn-primary" onclick="confirmMechanism()" disabled>
+                确认设置并开始点名 →
+            </button>
+        </div>
+    </div>
+
+    <!-- 提示信息 -->
+    <div id="alert" class="alert"></div>
+
+    <script>
+        // 全局变量
+        let selectedMechanism = null;
+        const sessionId = "{{ session_id }}";
+        const committeeName = "{{ committee_name }}";
+        const agenda = "{{ agenda }}";
+        const chairmanId = "{{ chairman_id }}";
+        const chairmanName = "{{ chairman_name }}";
+
+        // 投票机制详情
+        const mechanismDetails = {
+            simple_majority: {
+                title: "简单多数决",
+                description: "这是最常见的民主决策方式，适合大多数议题的表决。",
+                rules: [
+                    "赞成票 > 反对票 + 弃权票时通过",
+                    "计算方式：赞成票 / 总票数 > 50%",
+                    "弃权票不计入有效票数",
+                    "适用于一般性议题和程序性决定"
+                ],
+                example: "假设有100个与会国，需要至少51票赞成才能通过"
+            },
+            absolute_majority: {
+                title: "绝对多数决", 
+                description: "要求更高的共识度，适合重要议题和结构性改革。",
+                rules: [
+                    "需要全体成员的2/3以上赞成",
+                    "计算方式：赞成票 / 全体成员 ≥ 66.7%",
+                    "弃权和缺席都视为不支持",
+                    "适用于重要协议和制度变更"
+                ],
+                example: "假设有100个与会国，需要至少67票赞成才能通过"
+            },
+            consensus: {
+                title: "协商一致",
+                description: "WTO的传统决策方式，强调通过协商达成共识。",
+                rules: [
+                    "没有成员明确表示反对",
+                    "允许保留意见但不阻挠决定",
+                    "主席确认无反对意见后通过",
+                    "体现多边贸易体制的包容性"
+                ],
+                example: "所有成员都不投反对票，可以弃权或保留意见"
+            },
+            weighted_vote: {
+                title: "加权投票",
+                description: "根据各国经济实力分配投票权重，更加公平合理。",
+                rules: [
+                    "根据GDP、贸易额等指标分配权重",
+                    "大国权重较高，小国权重较低",
+                    "按加权得分计算最终结果",
+                    "兼顾效率与公平的现代方式"
+                ],
+                example: "美国权重15%，中国权重12%，小国权重0.5%等"
+            }
+        };
+
+        // 选择投票机制
+        function selectMechanism(mechanism) {
+            // 移除之前的选择
+            document.querySelectorAll('.mechanism-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+
+            // 选择当前机制
+            document.querySelector(`[data-mechanism="${mechanism}"]`).classList.add('selected');
+            selectedMechanism = mechanism;
+
+            // 更新预览
+            updatePreview(mechanism);
+
+            // 启用确认按钮
+            document.getElementById('confirm-btn').disabled = false;
+        }
+
+        // 更新机制预览
+        function updatePreview(mechanism) {
+            const details = mechanismDetails[mechanism];
+            const previewContainer = document.getElementById('mechanism-preview');
+
+            previewContainer.innerHTML = `
+                <div class="preview-section">
+                    <div class="preview-title">${details.title}</div>
+                    <div class="preview-content">${details.description}</div>
+                </div>
+                
+                <div class="preview-section">
+                    <div class="preview-title">📋 具体规则</div>
+                    <div class="preview-content">
+                        <ul style="margin: 0; padding-left: 16px;">
+                            ${details.rules.map(rule => `<li style="margin-bottom: 4px;">${rule}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="preview-section">
+                    <div class="preview-title">💡 示例说明</div>
+                    <div class="preview-content">${details.example}</div>
+                </div>
+            `;
+        }
+
+        // 获取投票机制所需百分比
+        function getRequiredPercentage(mechanism) {
+            switch(mechanism) {
+                case 'simple_majority':
+                    return 50.1;
+                case 'absolute_majority':
+                    return 66.7;
+                case 'consensus':
+                    return 0; // 协商一致不需要特定百分比
+                case 'weighted_vote':
+                    return 50.0; // 加权投票按权重计算
+                default:
+                    return 50.1;
+            }
+        }
+
+        // 确认投票机制
+        async function confirmMechanism() {
+            if (!selectedMechanism) {
+                showAlert('请先选择一个投票机制', 'error');
+                return;
+            }
+
+            try {
+                showAlert('正在保存投票机制设置...', 'success');
+
+                // 保存投票机制到后端
+                const response = await fetch('/api/save_voting_mechanism', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        chairman_id: chairmanId,
+                        chairman_name: chairmanName,
+                        committee_name: committeeName,
+                        agenda: agenda,
+                        mechanism_type: selectedMechanism,
+                        mechanism_name: mechanismDetails[selectedMechanism].title,
+                        required_percentage: getRequiredPercentage(selectedMechanism),
+                        mechanism_description: mechanismDetails[selectedMechanism].description
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    showAlert('投票机制设置成功！正在跳转到点名页面...', 'success');
+                    
+                    // 跳转到主席点名页面
+                    setTimeout(() => {
+                        const url = `/chairman-rollcall?session_id=${encodeURIComponent(sessionId)}&committee_name=${encodeURIComponent(committeeName)}&agenda=${encodeURIComponent(agenda)}&mechanism_name=${encodeURIComponent(mechanismDetails[selectedMechanism].title)}&mechanism_requirement=${encodeURIComponent(mechanismDetails[selectedMechanism].rules[1] || mechanismDetails[selectedMechanism].rules[0])}`;
+                        window.location.href = url;
+                    }, 1500);
+                } else {
+                    showAlert('保存投票机制失败：' + (data.message || '未知错误'), 'error');
+                }
+            } catch (error) {
+                console.error('保存投票机制失败:', error);
+                showAlert('网络错误，请重试', 'error');
+            }
+        }
+
+        // 显示提示信息
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 可以在这里加载已保存的投票机制设置
+            loadExistingSettings();
+        });
+
+        // 加载现有设置
+        async function loadExistingSettings() {
+            try {
+                const response = await fetch(`/api/get_session_info?session_id=${sessionId}`);
+                const data = await response.json();
+                
+                if (data.code === 200 && data.data.voting_mechanism) {
+                    // 如果已有设置，自动选择
+                    selectMechanism(data.data.voting_mechanism);
+                }
+            } catch (error) {
+                console.error('加载现有设置失败:', error);
+            }
+        }
+    </script>
+</body>
+</html>
